@@ -1,11 +1,12 @@
 {
     "tiles": [
-        "https://bikedataproject.github.io/heatmap-experiment/tiles/{z}/{x}/{y}.mvt"
+        "http://localhost:8081/tiles/{z}/{x}/{y}.mvt"
     ],
     "maxzoom": 14,
     "minzoom": 6,
     "name": "trips",
     "description": "Contains trips.",
+    "attribution": "<a href=\"http://www.openstreetmap.org/about/\" target=\"_blank\">&copy; OpenStreetMap contributors</a>",
     "format": "pbf",
     "id": "trips",
     "basename": "trips",
