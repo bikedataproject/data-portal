@@ -38,7 +38,7 @@
             map.addSource("earthquakes", {
                 type: 'vector',
                 url: 'https://bikedataproject.github.io/heatmap-experiment/mvt.json',
-                //url: 'http://localhost:8081/mvt.json'
+               // url: 'http://localhost:8081/mvt-local.json'
             });
 
             map.addLayer(
@@ -50,7 +50,7 @@
                     'paint': {
                         // Increase the heatmap weight based on frequency and property magnitude
                         'heatmap-weight':
-                            ['/', ['get', 'cost'], 10],
+                            ['/', ['get', 'cost'], 100],
                         // Increase the heatmap color weight weight by zoom level
                         // heatmap-intensity is a multiplier on top of heatmap-weight
                         'heatmap-intensity': [
@@ -70,17 +70,11 @@
                             ['linear'],
                             ['heatmap-density'],
                             0,
-                            'rgba(33,102,172,0)',
-                            0.2,
-                            'rgb(103,169,207)',
-                            0.4,
-                            'rgb(209,229,240)',
-                            0.6,
-                            'rgb(253,219,199)',
-                            0.8,
-                            'rgb(239,138,98)',
+                            'rgba(00,00,172,0)',
+                            0.9,                            
+                            '#ffff00',
                             1,
-                            'rgb(178,24,43)'
+                            '#ff0000'
                         ],
                         // Adjust the heatmap radius by zoom level
                         'heatmap-radius': [
