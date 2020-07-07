@@ -36,6 +36,33 @@
 
         map.on('load', function () {
 
+            // get lowest label and road.
+            var style = map.getStyle();
+            var lowestRoad = undefined;
+            var lowestLabel = undefined;
+            var lowestSymbol = undefined;
+            for (var l = 0; l < style.layers.length; l++) {
+                var layer = style.layers[l];
+
+                if (layer && layer["source-layer"] === "transportation") {
+                    if (!lowestRoad) {
+                    lowestRoad = layer.id;
+                    }
+                }
+
+                if (layer && layer["source-layer"] === "transportation_name") {
+                    if (!lowestLabel) {
+                    lowestLabel = layer.id;
+                    }
+                }
+
+                if (layer && layer.type == "symbol") {
+                    if (!lowestSymbol) {
+                    lowestSymbol = layer.id;
+                    }
+                }
+            }
+
             map.addSource("earthquakes", {
                 type: 'vector',
                 url: 'https://bikedataproject.github.io/heatmap-experiment/mvt.json',
@@ -57,7 +84,7 @@
                             0,
                             ['/', ['get', 'cost'], 1000],
                             14,
-                            ['/', ['get', 'cost'], 200],
+                            ['/', ['get', 'cost'], 400],
                             20,
                             ['/', ['get', 'cost'], 100]
                             ],
@@ -75,14 +102,33 @@
                         // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
                         // Begin color ramp at 0-stop with a 0-transparancy color
                         // to create a blur-like effect.
+                        // 'heatmap-color': [
+                        //     'interpolate',
+                        //     ['linear'],
+                        //     ['heatmap-density'],
+                        //     0,
+                        //     'rgba(00,00,172,0)',
+                        //     1,
+                        //     '#ffff00'
+                        //     1,
+                        //     '#ffff00'
+                        // ],
                         'heatmap-color': [
                             'interpolate',
                             ['linear'],
                             ['heatmap-density'],
                             0,
-                            'rgba(00,00,172,0)',
+                            'rgba(33,102,172,0)',
+                            0.2,
+                            'rgb(103,169,207)',
+                            0.4,
+                            'rgb(209,229,240)',
+                            0.6,
+                            'rgb(253,219,199)',
+                            0.8,
+                            'rgb(239,138,98)',
                             1,
-                            '#ffff00'
+                            'rgb(178,24,43)'
                         ],
                         // Adjust the heatmap radius by zoom level
                         'heatmap-radius': [
@@ -91,12 +137,10 @@
                             ['zoom'],
                             0,
                             2,
-                            10,
-                            2,
                             14,
-                            4,
+                            10,
                             20,
-                            20
+                            40
                         ],
                         // Transition from heatmap to circle layer by zoom level
                         'heatmap-opacity': [
@@ -109,7 +153,7 @@
                             0.5
                         ]
                     }
-                },
+                }, lowestSymbol
             );
         });
     </script>
