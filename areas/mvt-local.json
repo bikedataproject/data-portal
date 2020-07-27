@@ -1,0 +1,23 @@
+{
+    "tiles": [
+        "http://localhost:8081/areas/{z}/{x}/{y}.mvt"
+    ],
+    "maxzoom": 14,
+    "minzoom": 0,
+    "name": "areas",
+    "description": "Contains statistics about the data in the Bike Data Project.",
+    "attribution": "<a href=\"http://www.openstreetmap.org/about/\" target=\"_blank\">&copy; OpenStreetMap contributors</a>",
+    "format": "pbf",
+    "id": "areas",
+    "basename": "areas",
+    "vector_layers": [
+        {
+            "maxzoom": 14,
+            "minzoom": 0,
+            "id": "areas",
+            "description": "Statistics about the data in the Bike Data Project aggregate per area."
+        }
+    ],
+    "version": "1.0",
+    "tilejson": "2.0.0"
+}

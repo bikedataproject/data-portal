@@ -1,0 +1,22 @@
+{
+    "tiles": [
+        "https://bikedataproject.github.io/heatmap-experiment/areas/{z}/{x}/{y}.mvt"
+    ],
+    "maxzoom": 14,
+    "minzoom": 0,
+    "name": "trips",
+    "description": "Contains trips.",
+    "format": "pbf",
+    "id": "trips",
+    "basename": "trips",
+    "vector_layers": [
+        {
+            "maxzoom": 14,
+            "minzoom": 6,
+            "id": "heatmap",
+            "description": "The edges with trip data on them."
+        }
+    ],
+    "version": "1.0",
+    "tilejson": "2.0.0"
+}
