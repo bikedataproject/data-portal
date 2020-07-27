@@ -5,8 +5,8 @@
     <meta charset="utf-8" />
     <title>Create a heatmap layer</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <script src="https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v1.11.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v1.11.1/mapbox-gl.css" rel="stylesheet" />
     <style>
         body {
             margin: 0;
@@ -19,11 +19,25 @@
             bottom: 0;
             width: 100%;
         }
+
+        .map-overlay {
+            font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            background-color: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+            position: absolute;
+            width: 25%;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+            display: none;
+        }
     </style>
 </head>
 
 <body>
     <div id="map"></div>
+    <div id="map-overlay" class="map-overlay"></div>
 
     <script>
         var map = new mapboxgl.Map({
@@ -36,6 +50,11 @@
         });
 
         map.addControl(new mapboxgl.NavigationControl());
+
+        var overlay = document.getElementById('map-overlay');
+        var popup = new mapboxgl.Popup({
+            closeButton: false
+        });
 
         map.on('load', function () {
 
@@ -180,6 +199,62 @@
                     'line-color': '#ffd700',
                     'line-width': 1
                 }
+            });
+
+            map.addLayer(
+                {
+                    'id': 'areas-stats-selected',
+                    'type': 'fill',
+                    'source': 'areas',
+                    'source-layer': 'areas',
+                    'paint': {
+                        'fill-outline-color': '#484896',
+                        'fill-color': '#6e599f',
+                        'fill-opacity': 0.75
+                    },
+                    'filter': ['in', 'id', '']
+                }, 'areas-stats-boundaries');
+
+            map.on('mousemove', 'areas-stats', function (e) {
+
+                map.getCanvas().style.cursor = 'pointer';
+
+                var feature = e.features[0];
+                //console.log(feature);
+
+                overlay.innerHTML = '';
+                
+                var title = document.createElement('strong');
+                title.textContent =
+                    feature.properties.name;
+
+                var population = document.createElement('div');
+                population.textContent =
+                    'Total KMs: ' + feature.properties.km + ' ' +                    
+                    'Total Time: ' + feature.properties.seconds + ' ' +                    
+                    'Total Trips: ' + feature.properties.count;
+
+                overlay.appendChild(title);
+                overlay.appendChild(population);
+                overlay.style.display = 'block';
+
+                map.setFilter('areas-stats-selected', [
+                    'in',
+                    'id',
+                    feature.properties.id
+                ]);
+
+                popup
+                    .setLngLat(e.lngLat)
+                    .setText(feature.properties.name)
+                    .addTo(map);
+            });
+
+            map.on('mouseleave', 'areas-stats', function () {
+                map.getCanvas().style.cursor = '';
+                popup.remove();
+                map.setFilter('areas-stats-selected', ['in', 'id', '']);
+                overlay.style.display = 'none';
             });
         });
     </script>
