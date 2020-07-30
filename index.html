@@ -85,177 +85,177 @@
                 }
             }
 
-            // map.addSource("earthquakes", {
-            //     type: 'vector',
-            //     //url: 'https://bikedataproject.github.io/heatmap-experiment/mvt.json',
-            //     url: 'http://localhost:8081/tiles/mvt-local.json'
-            // });
-
-            // map.addLayer(
-            //     {
-            //         'id': 'earthquakes-heat',
-            //         'type': 'heatmap',
-            //         'source': 'earthquakes',
-            //         'source-layer': 'heatmap',
-            //         'visibility': 'none',
-            //         'paint': {
-            //             // Increase the heatmap weight based on frequency and property magnitude
-            //             'heatmap-weight': [
-            //                 'interpolate',
-            //                 ['linear'],
-            //                 ['zoom'],
-            //                 0,
-            //                 ['/', ['get', 'cost'], 100000],
-            //                 14,
-            //                 ['/', ['get', 'cost'], 16000],
-            //                 20,
-            //                 ['/', ['get', 'cost'], 400]
-            //                 ],
-            //             // Increase the heatmap color weight weight by zoom level
-            //             // heatmap-intensity is a multiplier on top of heatmap-weight
-            //             'heatmap-intensity': [
-            //                 'interpolate',
-            //                 ['linear'],
-            //                 ['zoom'],
-            //                 0,
-            //                 1,
-            //                 7,
-            //                 1,
-            //                 20,
-            //                 6
-            //             ],
-            //             // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
-            //             // Begin color ramp at 0-stop with a 0-transparancy color
-            //             // to create a blur-like effect.
-            //             'heatmap-color': [
-            //                 'interpolate',
-            //                 ['linear'],
-            //                 ['heatmap-density'],
-            //                 0,
-            //                 'rgba(33,102,172,0)',
-            //                 0.2,
-            //                 'rgb(103,169,207)',
-            //                 0.3,
-            //                 'rgb(255,0,0)',
-            //                 1,
-            //                 'rgba(255,220,75, 1)'
-            //             ],
-            //             // Adjust the heatmap radius by zoom level
-            //             'heatmap-radius': [
-            //                 'interpolate',
-            //                 ['linear'],
-            //                 ['zoom'],
-            //                 0,
-            //                 2,
-            //                 14,
-            //                 10,
-            //                 20,
-            //                 20
-            //             ],
-            //             // Transition from heatmap to circle layer by zoom level
-            //             'heatmap-opacity': [
-            //                 'interpolate',
-            //                 ['linear'],
-            //                 ['zoom'],
-            //                 0,
-            //                 0.8,
-            //                 7,
-            //                 0.7,
-            //                 20,
-            //                 0.7
-            //             ]
-            //         }
-            //     }, lowestSymbol
-            // );
-
-
-            map.addSource("areas", {
+            map.addSource("earthquakes", {
                 type: 'vector',
-                url: 'https://bikedataproject.github.io/heatmap-experiment/areas/mvt.json'
-                //url: 'http://localhost:8081/areas/mvt-local.json'
-            });
-
-            map.addLayer({
-                'id': 'areas-stats',
-                'type': 'fill',
-                'source': 'areas',
-                'source-layer': 'areas',
-                'paint': {
-                    'fill-color': '#ffd700',
-                    'fill-opacity': 0.1
-                }
-            });
-
-            map.addLayer({
-                'id': 'areas-stats-boundaries',
-                'type': 'line',
-                'source': 'areas',
-                'source-layer': 'areas',
-                'layout': {
-                    'line-join': 'round',
-                    'line-cap': 'round'
-                },
-                'paint': {
-                    'line-color': '#ffd700',
-                    'line-width': 1
-                }
+                url: 'https://bikedataproject.github.io/heatmap-experiment/mvt.json',
+                //url: 'http://localhost:8081/tiles/mvt-local.json'
             });
 
             map.addLayer(
                 {
-                    'id': 'areas-stats-selected',
-                    'type': 'fill',
-                    'source': 'areas',
-                    'source-layer': 'areas',
+                    'id': 'earthquakes-heat',
+                    'type': 'heatmap',
+                    'source': 'earthquakes',
+                    'source-layer': 'heatmap',
+                    'visibility': 'none',
                     'paint': {
-                        'fill-outline-color': '#484896',
-                        'fill-color': '#6e599f',
-                        'fill-opacity': 0.75
-                    },
-                    'filter': ['in', 'id', '']
-                }, 'areas-stats-boundaries');
+                        // Increase the heatmap weight based on frequency and property magnitude
+                        'heatmap-weight': [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            0,
+                            ['/', ['get', 'cost'], 100000],
+                            14,
+                            ['/', ['get', 'cost'], 16000],
+                            20,
+                            ['/', ['get', 'cost'], 400]
+                            ],
+                        // Increase the heatmap color weight weight by zoom level
+                        // heatmap-intensity is a multiplier on top of heatmap-weight
+                        'heatmap-intensity': [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            0,
+                            1,
+                            7,
+                            1,
+                            20,
+                            6
+                        ],
+                        // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+                        // Begin color ramp at 0-stop with a 0-transparancy color
+                        // to create a blur-like effect.
+                        'heatmap-color': [
+                            'interpolate',
+                            ['linear'],
+                            ['heatmap-density'],
+                            0,
+                            'rgba(33,102,172,0)',
+                            0.2,
+                            'rgb(103,169,207)',
+                            0.3,
+                            'rgb(255,0,0)',
+                            1,
+                            'rgba(255,220,75, 1)'
+                        ],
+                        // Adjust the heatmap radius by zoom level
+                        'heatmap-radius': [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            0,
+                            2,
+                            14,
+                            10,
+                            20,
+                            20
+                        ],
+                        // Transition from heatmap to circle layer by zoom level
+                        'heatmap-opacity': [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            0,
+                            0.8,
+                            7,
+                            0.7,
+                            20,
+                            0.7
+                        ]
+                    }
+                }, lowestSymbol
+            );
 
-            map.on('mousemove', 'areas-stats', function (e) {
+            // map.addSource("areas", {
+            //     type: 'vector',
+            //     //url: 'https://api.bikedataproject.info/statistics/tiles/mvt-prod.json',
+            //     //url: 'https://bikedataproject.github.io/heatmap-experiment/areas/mvt.json'
+            //     url: 'http://localhost:8081/areas/mvt-local.json'
+            // });
 
-                map.getCanvas().style.cursor = 'pointer';
+            // map.addLayer({
+            //     'id': 'areas-stats',
+            //     'type': 'fill',
+            //     'source': 'areas',
+            //     'source-layer': 'areas',
+            //     'paint': {
+            //         'fill-color': '#ffd700',
+            //         'fill-opacity': 0.1
+            //     }
+            // });
 
-                var feature = e.features[0];
-                //console.log(feature);
+            // map.addLayer({
+            //     'id': 'areas-stats-boundaries',
+            //     'type': 'line',
+            //     'source': 'areas',
+            //     'source-layer': 'areas',
+            //     'layout': {
+            //         'line-join': 'round',
+            //         'line-cap': 'round'
+            //     },
+            //     'paint': {
+            //         'line-color': '#ffd700',
+            //         'line-width': 1
+            //     }
+            // });
 
-                overlay.innerHTML = '';
+            // map.addLayer(
+            //     {
+            //         'id': 'areas-stats-selected',
+            //         'type': 'fill',
+            //         'source': 'areas',
+            //         'source-layer': 'areas',
+            //         'paint': {
+            //             'fill-outline-color': '#484896',
+            //             'fill-color': '#6e599f',
+            //             'fill-opacity': 0.75
+            //         },
+            //         'filter': ['in', 'id', '']
+            //     }, 'areas-stats-boundaries');
+
+            // map.on('mousemove', 'areas-stats', function (e) {
+
+            //     map.getCanvas().style.cursor = 'pointer';
+
+            //     var feature = e.features[0];
+            //     console.log(feature);
+
+            //     overlay.innerHTML = '';
                 
-                var title = document.createElement('strong');
-                title.textContent =
-                    feature.properties.name;
+            //     var title = document.createElement('strong');
+            //     title.textContent =
+            //         feature.properties.name;
 
-                var population = document.createElement('div');
-                population.textContent =
-                    'Total KMs: ' + feature.properties.km + ' ' +                    
-                    'Total Time: ' + feature.properties.seconds + ' ' +                    
-                    'Total Trips: ' + feature.properties.count;
+            //     var population = document.createElement('div');
+            //     population.textContent =
+            //         'Total KMs: ' + feature.properties.km + ' ' +                    
+            //         'Total Time: ' + feature.properties.seconds + ' ' +                    
+            //         'Total Trips: ' + feature.properties.count;
 
-                overlay.appendChild(title);
-                overlay.appendChild(population);
-                overlay.style.display = 'block';
+            //     overlay.appendChild(title);
+            //     overlay.appendChild(population);
+            //     overlay.style.display = 'block';
 
-                map.setFilter('areas-stats-selected', [
-                    'in',
-                    'id',
-                    feature.properties.id
-                ]);
+            //     map.setFilter('areas-stats-selected', [
+            //         'in',
+            //         'id',
+            //         feature.properties.id
+            //     ]);
 
-                popup
-                    .setLngLat(e.lngLat)
-                    .setText(feature.properties.name)
-                    .addTo(map);
-            });
+            //     popup
+            //         .setLngLat(e.lngLat)
+            //         .setText(feature.properties.name)
+            //         .addTo(map);
+            // });
 
-            map.on('mouseleave', 'areas-stats', function () {
-                map.getCanvas().style.cursor = '';
-                popup.remove();
-                map.setFilter('areas-stats-selected', ['in', 'id', '']);
-                overlay.style.display = 'none';
-            });
+            // map.on('mouseleave', 'areas-stats', function () {
+            //     map.getCanvas().style.cursor = '';
+            //     popup.remove();
+            //     map.setFilter('areas-stats-selected', ['in', 'id', '']);
+            //     overlay.style.display = 'none';
+            // });
         });
     </script>
 
