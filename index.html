@@ -87,8 +87,9 @@
 
             map.addSource("earthquakes", {
                 type: 'vector',
-                url: 'https://bikedataproject.github.io/heatmap-experiment/mvt.json',
+                //url: 'https://bikedataproject.github.io/heatmap-experiment/mvt.json',
                 //url: 'http://localhost:8081/tiles/mvt-local.json'
+                url: 'https://api.bikedataproject.org/tiles/heatmap/mvt.json'
             });
 
             map.addLayer(
