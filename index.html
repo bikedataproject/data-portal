@@ -93,6 +93,7 @@
                 url: 'https://api.bikedataproject.org/tiles/heatmap/mvt.json'
             });
 
+            var factor = 2;
             map.addLayer(
                 {
                     'id': 'earthquakes-heat',
@@ -107,11 +108,13 @@
                             ['linear'],
                             ['zoom'],
                             0,
-                            ['/', ['get', 'cost'], 10000],
+                            ['/', ['get', 'cost'], factor * 100000000],
+                            10,
+                            ['/', ['get', 'cost'], factor * 10000000],
                             14,
-                            ['/', ['get', 'cost'], 3000],
+                            ['/', ['get', 'cost'], factor * 10000],
                             20,
-                            ['/', ['get', 'cost'], 50]
+                            ['/', ['get', 'cost'], factor * 100]
                             ],
                         // Increase the heatmap color weight weight by zoom level
                         // heatmap-intensity is a multiplier on top of heatmap-weight
@@ -121,7 +124,7 @@
                             ['zoom'],
                             0,
                             1,
-                            7,
+                            12,
                             1,
                             20,
                             6
@@ -135,9 +138,9 @@
                             ['heatmap-density'],
                             0,
                             'rgba(33,102,172,0)',
-                            0.2,
+                            0.4,
                             'rgb(103,169,207)',
-                            0.3,
+                            0.7,
                             'rgb(255,0,0)',
                             1,
                             'rgba(255,220,75, 1)'
@@ -150,7 +153,7 @@
                             0,
                             2,
                             14,
-                            10,
+                            8,
                             20,
                             20
                         ],
@@ -160,11 +163,11 @@
                             ['linear'],
                             ['zoom'],
                             0,
-                            0.8,
+                            0.9,
                             7,
-                            0.7,
+                            0.9,
                             20,
-                            0.7
+                            1
                         ]
                     }
                 }, lowestSymbol
