@@ -3,9 +3,10 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Create a heatmap layer</title>
+    <title>Bike Data Project | Experimental Heatmap</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
     <script src="https://api.mapbox.com/mapbox-gl-js/v1.11.1/mapbox-gl.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v1.11.1/mapbox-gl.css" rel="stylesheet" />
     <style>
         body {
@@ -86,21 +87,20 @@
                 }
             }
 
-            map.addSource("earthquakes", {
+            map.addSource("heatmap", {
                 type: 'vector',
-                //url: 'https://bikedataproject.github.io/heatmap-experiment/mvt.json',
-                //url: 'http://localhost:8081/tiles/mvt-local.json'
                 url: 'https://api.bikedataproject.org/tiles/heatmap/mvt.json'
             });
 
             var factor = 2;
             map.addLayer(
                 {
-                    'id': 'earthquakes-heat',
+                    'id': 'heatmap-heat',
                     'type': 'heatmap',
-                    'source': 'earthquakes',
+                    'source': 'heatmap',
                     'source-layer': 'heatmap',
                     'visibility': 'none',
+                    //'minzoom': 12,
                     'paint': {
                         // Increase the heatmap weight based on frequency and property magnitude
                         'heatmap-weight': [
@@ -173,94 +173,141 @@
                 }, lowestSymbol
             );
 
-            // map.addSource("areas", {
-            //     type: 'vector',
-            //     //url: 'https://api.bikedataproject.info/statistics/tiles/mvt-prod.json',
-            //     //url: 'https://bikedataproject.github.io/heatmap-experiment/areas/mvt.json'
-            //     url: 'http://localhost:8081/areas/mvt-local.json'
-            // });
+            $.get('all_statistics.json', function (data) {
+                console.log(data);
 
-            // map.addLayer({
-            //     'id': 'areas-stats',
-            //     'type': 'fill',
-            //     'source': 'areas',
-            //     'source-layer': 'areas',
-            //     'paint': {
-            //         'fill-color': '#ffd700',
-            //         'fill-opacity': 0.1
-            //     }
-            // });
+                map.addSource("areas", {
+                    type: 'vector',
+                    url: 'https://api.bikedataproject.org/tiles/areas/mvt.json',
+                    promoteId: 'id'
+                });
 
-            // map.addLayer({
-            //     'id': 'areas-stats-boundaries',
-            //     'type': 'line',
-            //     'source': 'areas',
-            //     'source-layer': 'areas',
-            //     'layout': {
-            //         'line-join': 'round',
-            //         'line-cap': 'round'
-            //     },
-            //     'paint': {
-            //         'line-color': '#ffd700',
-            //         'line-width': 1
-            //     }
-            // });
+                map.on('data', function(e) {
+                    if (e.type == "style") return;
 
-            // map.addLayer(
-            //     {
-            //         'id': 'areas-stats-selected',
-            //         'type': 'fill',
-            //         'source': 'areas',
-            //         'source-layer': 'areas',
-            //         'paint': {
-            //             'fill-outline-color': '#484896',
-            //             'fill-color': '#6e599f',
-            //             'fill-opacity': 0.75
-            //         },
-            //         'filter': ['in', 'id', '']
-            //     }, 'areas-stats-boundaries');
+                    if (e.isSourceLoaded){
+                        console.log("Setting states");
+                        map.querySourceFeatures("areas", {
+                            sourceLayer: "areas"
+                        }).forEach(function(f) {
+                            if (f.properties && f.properties.id) {
+                                var stats = data[f.properties.id];
+                                if (stats) {
+                                    map.setFeatureState({
+                                        source: "areas",
+                                        sourceLayer: "areas",
+                                        id: f.properties.id
+                                    }, {
+                                        count: stats.count
+                                    });
+                                }
+                            }                            
+                        });
+                    }
+                });
 
-            // map.on('mousemove', 'areas-stats', function (e) {
+                map.addLayer({
+                    'id': 'areas-stats',
+                    'type': 'fill',
+                    'source': 'areas',
+                    'source-layer': 'areas',
+                    'maxzoom': 12,
+                    'paint': {
+                        'fill-color': 
+                            ['case',
+                                ['==', ['feature-state', 'count'], null], 'rgba(255, 255, 255, 0)',
+                                ['>',  ['feature-state', 'count'], 0], 'rgba(255,220,75, 1)',
+                                'rgba(255, 255, 255, 0)'],
+                        'fill-opacity': 0.1
+                    }
+                }, "heatmap-heat");
 
-            //     map.getCanvas().style.cursor = 'pointer';
+                // map.addLayer({
+                //     'id': 'areas-stats-boundaries',
+                //     'type': 'line',
+                //     'source': 'areas',
+                //     'source-layer': 'areas',
+                //     'layout': {
+                //         'line-join': 'round',
+                //         'line-cap': 'round'
+                //     },
+                //     'paint': {
+                //         'line-color': '#ffd700',
+                //         'line-width': 1
+                //     }
+                // });
 
-            //     var feature = e.features[0];
-            //     console.log(feature);
+                // map.addLayer(
+                //     {
+                //         'id': 'areas-stats-selected',
+                //         'type': 'fill',
+                //         'source': 'areas',
+                //         'source-layer': 'areas',
+                //         'paint': {
+                //             'fill-outline-color': '#484896',
+                //             'fill-color': '#6e599f',
+                //             'fill-opacity': 0.75
+                //         },
+                //         'filter': ['in', 'id', '']
+                //     }, 'areas-stats-boundaries');
 
-            //     overlay.innerHTML = '';
-                
-            //     var title = document.createElement('strong');
-            //     title.textContent =
-            //         feature.properties.name;
+                // map.on('mousemove', 'areas-stats', function (e) {
 
-            //     var population = document.createElement('div');
-            //     population.textContent =
-            //         'Total KMs: ' + feature.properties.km + ' ' +                    
-            //         'Total Time: ' + feature.properties.seconds + ' ' +                    
-            //         'Total Trips: ' + feature.properties.count;
+                //     map.getCanvas().style.cursor = 'pointer';
 
-            //     overlay.appendChild(title);
-            //     overlay.appendChild(population);
-            //     overlay.style.display = 'block';
+                //     var feature = e.features[0];
+                //     console.log(feature);
 
-            //     map.setFilter('areas-stats-selected', [
-            //         'in',
-            //         'id',
-            //         feature.properties.id
-            //     ]);
+                //     overlay.innerHTML = '';
 
-            //     popup
-            //         .setLngLat(e.lngLat)
-            //         .setText(feature.properties.name)
-            //         .addTo(map);
-            // });
+                //     var title = document.createElement('strong');
+                //     title.textContent =
+                //         feature.properties.name;
 
-            // map.on('mouseleave', 'areas-stats', function () {
-            //     map.getCanvas().style.cursor = '';
-            //     popup.remove();
-            //     map.setFilter('areas-stats-selected', ['in', 'id', '']);
-            //     overlay.style.display = 'none';
-            // });
+                //     var population = document.createElement('div');
+                //     population.textContent =
+                //         'Total KMs: ' + feature.properties.km + ' ' +                    
+                //         'Total Time: ' + feature.properties.seconds + ' ' +                    
+                //         'Total Trips: ' + feature.properties.count;
+
+                //     overlay.appendChild(title);
+                //     overlay.appendChild(population);
+                //     overlay.style.display = 'block';
+
+                //     map.setFilter('areas-stats-selected', [
+                //         'in',
+                //         'id',
+                //         feature.properties.id
+                //     ]);
+
+                //     popup
+                //         .setLngLat(e.lngLat)
+                //         .setText(feature.properties.name)
+                //         .addTo(map);
+                // });
+
+                // map.on('mouseleave', 'areas-stats', function () {
+                //     map.getCanvas().style.cursor = '';
+                //     popup.remove();
+                //     map.setFilter('areas-stats-selected', ['in', 'id', '']);
+                //     overlay.style.display = 'none';
+                // });
+
+                // // Check if `statsData` source is loaded.
+                // function setAfterLoad(e) {
+                //     if (e.sourceId === 'areas' && e.isSourceLoaded) {
+                //         setStats();
+                //         map.off('sourcedata', setAfterLoad);
+                //     }
+                // }
+
+                // // If `areas` source is loaded, call `setStats()`.
+                // if (map.isSourceLoaded('areas')) {
+                //     setStats();
+                // } else {
+                //     map.on('sourcedata', setAfterLoad);
+                // }
+            });
         });
     </script>
 
