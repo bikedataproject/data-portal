@@ -1,5 +1,3 @@
-# heatmap-experiment
+# data-portal
 
-A small heatmap experiment.
-
-Available for preview [https://bikedataproject.github.io/heatmap-experiment/](https://bikedataproject.github.io/heatmap-experiment/).
+A start of a [https://data.bikedataproject.org/](data portal).

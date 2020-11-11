@@ -1,0 +1,22 @@
+name: Production
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Login to Docker Hub
+      run: echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u anywaysopen --password-stdin
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag bikedataproject/data-portal:prod --tag bikedataproject/data-portal:prod-0.$GITHUB_RUN_NUMBER
+    - name: Push Docker image.
+      run: docker push bikedataproject/data-portal:prod
+    - name: Push Docker image.
+      run: docker push bikedataproject/data-portal:prod-0.$GITHUB_RUN_NUMBER
