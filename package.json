@@ -1,0 +1,25 @@
+{
+  "name": "data-portal",
+  "version": "1.0.0",
+  "description": "A start of a [data portal](https://data.bikedataproject.org/).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "parcel index.html",
+    "build": "parcel build --public-url ./ index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bikedataproject/data-portal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bikedataproject/data-portal/issues"
+  },
+  "homepage": "https://github.com/bikedataproject/data-portal#readme",
+  "devDependencies": {
+    "typescript": "^4.1.2"
+  }
+}
