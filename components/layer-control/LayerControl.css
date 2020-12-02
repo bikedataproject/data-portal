@@ -1,0 +1,38 @@
+.layers {
+    background: rgba(255, 255, 255, 0);
+    position: absolute;
+    z-index: 1;
+    border-radius: 3px;
+    width: 120px;
+}
+
+.layers a {
+    font-size: 13px;
+    color: #404040;
+    background: rgba(255, 255, 255, 1);
+    display: block;
+    margin: 0;
+    padding: 0;
+    padding: 10px;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+    text-align: center;
+}
+
+.layers a:last-child {
+    border: none;
+}
+
+.layers a:hover {
+    background-color: #f8f8f8;
+    color: #404040;
+}
+
+.layers a.active {
+    background-color: #3887be;
+    color: #ffffff;
+}
+
+.layers a.active:hover {
+    background: #3074a4;
+}
