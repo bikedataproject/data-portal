@@ -46,109 +46,132 @@ map.on('load', function () {
         }
     }
 
+    map.addSource("bicycle-counts", {
+        type: 'vector',
+        url: 'http://localhost:5000/tiles/mvt.json'
+    });
+
+    map.addLayer({
+        'id': 'areas-stats-boundaries',
+        'type': 'line',
+        'source': 'bicycle-counts',
+        'source-layer': 'bikedata',
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        'paint': {
+            'line-color': '#ffd700',
+            'line-width': ['interpolate', ['linear'], ['zoom'],
+                10, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 10], 0.1], 2],
+                14, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 10], 0.1], 20]
+            ]
+        }
+    });
+
     map.addSource("heatmap", {
         type: 'vector',
         //url: 'local-mvt.json'
         url: 'https://api.bikedataproject.org/tiles/heatmap/mvt.json'
     });
 
-    map.addLayer({
-        'id': 'heatmap-heat-lower',
-        'type': 'heatmap',
-        'source': 'heatmap',
-        'source-layer': 'heatmap',
-        'visibility': 'none',
-        'minzoom': 14,
-        'paint': {
-            'heatmap-weight': ['case',
-                ['>', ['get', 'users'], 0], ['max', ['/', ['get', 'users'], 10000], .1],
-                0],
-            'heatmap-intensity': 1,
-            'heatmap-color': [
-                'interpolate',
-                ['linear'],
-                ['heatmap-density'],
-                0,
-                'rgba(33,102,172,0)',
-                0.5,
-                'rgba(103,169,207,1)',
-                0.8,
-                'rgb(255,0,0)',
-                1,
-                'rgba(255,220,75, 1)'
-            ],
-            'heatmap-radius': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                14, 10,
-                20, 20
-            ],
-            'heatmap-opacity': 1
-        }
-    }, lowestSymbol
-    );
+    // map.addLayer({
+    //     'id': 'heatmap-heat-lower',
+    //     'type': 'heatmap',
+    //     'source': 'heatmap',
+    //     'source-layer': 'heatmap',
+    //     'visibility': 'none',
+    //     'minzoom': 14,
+    //     'paint': {
+    //         'heatmap-weight': ['case',
+    //             ['>', ['get', 'users'], 0], ['max', ['/', ['get', 'users'], 10000], .1],
+    //             0],
+    //         'heatmap-intensity': 1,
+    //         'heatmap-color': [
+    //             'interpolate',
+    //             ['linear'],
+    //             ['heatmap-density'],
+    //             0,
+    //             'rgba(33,102,172,0)',
+    //             0.5,
+    //             'rgba(103,169,207,1)',
+    //             0.8,
+    //             'rgb(255,0,0)',
+    //             1,
+    //             'rgba(255,220,75, 1)'
+    //         ],
+    //         'heatmap-radius': [
+    //             'interpolate',
+    //             ['linear'],
+    //             ['zoom'],
+    //             14, 10,
+    //             20, 20
+    //         ],
+    //         'heatmap-opacity': 1
+    //     }
+    // }, lowestSymbol
+    // );
 
-    function factor(zoom) {
-        return 1000000 * Math.pow(4, 14-zoom);
-    }
+    // function factor(zoom) {
+    //     return 1000000 * Math.pow(4, 14 - zoom);
+    // }
 
-    map.addLayer({
-        'id': 'heatmap-heat-higher',
-        'type': 'heatmap',
-        'source': 'heatmap',
-        'source-layer': 'heatmap',
-        'visibility': 'none',
-        'maxzoom': 14,
-        'paint': {
-            'heatmap-weight': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                0,
-                ['case',
-                    ['>', ['get', 'users'], 0], ['max', ['/', ['get', 'users'], factor(0)], .1],
-                    0],
-                12,
-                ['case',
-                    ['>', ['get', 'users'], 0], ['max', ['/', ['get', 'users'], factor(12)], .1],
-                    0],
-                13,
-                ['case',
-                    ['>', ['get', 'users'], 0], ['max', ['/', ['get', 'users'], factor(13)], .1],
-                    0],
-                14,
-                ['case',
-                    ['>', ['get', 'users'], 0], ['max', ['/', ['get', 'users'], factor(14)], .1],
-                    0]
-            ],
-            'heatmap-intensity': 1,
-            'heatmap-color': [
-                'interpolate',
-                ['linear'],
-                ['heatmap-density'],
-                0,
-                'rgba(33,102,172,0)',
-                0.5,
-                'rgba(103,169,207,1)',
-                0.8,
-                'rgb(255,0,0)',
-                1,
-                'rgba(255,220,75, 1)'
-            ],
-            'heatmap-radius': 10,
-            'heatmap-opacity': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                0,
-                0.5,
-                14,
-                0.9
-            ]
-        }
-    }, lowestSymbol
-    );
+    // map.addLayer({
+    //     'id': 'heatmap-heat-higher',
+    //     'type': 'heatmap',
+    //     'source': 'heatmap',
+    //     'source-layer': 'heatmap',
+    //     'visibility': 'none',
+    //     'maxzoom': 14,
+    //     'paint': {
+    //         'heatmap-weight': [
+    //             'interpolate',
+    //             ['linear'],
+    //             ['zoom'],
+    //             0,
+    //             ['case',
+    //                 ['>', ['get', 'users'], 0], ['max', ['/', ['get', 'users'], factor(0)], .1],
+    //                 0],
+    //             12,
+    //             ['case',
+    //                 ['>', ['get', 'users'], 0], ['max', ['/', ['get', 'users'], factor(12)], .1],
+    //                 0],
+    //             13,
+    //             ['case',
+    //                 ['>', ['get', 'users'], 0], ['max', ['/', ['get', 'users'], factor(13)], .1],
+    //                 0],
+    //             14,
+    //             ['case',
+    //                 ['>', ['get', 'users'], 0], ['max', ['/', ['get', 'users'], factor(14)], .1],
+    //                 0]
+    //         ],
+    //         'heatmap-intensity': 1,
+    //         'heatmap-color': [
+    //             'interpolate',
+    //             ['linear'],
+    //             ['heatmap-density'],
+    //             0,
+    //             'rgba(33,102,172,0)',
+    //             0.5,
+    //             'rgba(103,169,207,1)',
+    //             0.8,
+    //             'rgb(255,0,0)',
+    //             1,
+    //             'rgba(255,220,75, 1)'
+    //         ],
+    //         'heatmap-radius': 10,
+    //         'heatmap-opacity': [
+    //             'interpolate',
+    //             ['linear'],
+    //             ['zoom'],
+    //             0,
+    //             0.5,
+    //             14,
+    //             0.9
+    //         ]
+    //     }
+    // }, lowestSymbol
+    // );
 
     // map.addLayer(
     // {
