@@ -1,4 +1,4 @@
-
+import * as $ from "jquery";
 
 var map = new mapboxgl.Map({
     container: 'map',
@@ -48,11 +48,11 @@ map.on('load', function () {
 
     map.addSource("bicycle-counts", {
         type: 'vector',
-        url: 'http://localhost:5000/tiles/mvt.json'
+        url: 'http://135.181.132.154:5006/tiles/mvt.json'
     });
 
     map.addLayer({
-        'id': 'areas-stats-boundaries',
+        'id': 'bicycle-counts',
         'type': 'line',
         'source': 'bicycle-counts',
         'source-layer': 'bikedata',
@@ -67,7 +67,7 @@ map.on('load', function () {
                 14, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 10], 0.1], 20]
             ]
         }
-    });
+    }, lowestSymbol);
 
     map.addSource("heatmap", {
         type: 'vector',
@@ -234,6 +234,60 @@ map.on('load', function () {
                     }
                 });
             }
+        });
+
+        map.on('click', function (e) {
+            // set bbox as 5px reactangle area around clicked point
+            var bbox = [
+                [e.point.x - 5, e.point.y - 5],
+                [e.point.x + 5, e.point.y + 5]
+            ];
+            var features = map.queryRenderedFeatures(bbox, {
+                layers: ['bicycle-counts']
+            });
+
+            if (features.length == 0) {
+                map.setFilter('bicycle-counts', undefined);
+                return;
+            }
+            
+            var feature = features[0];
+
+            // get tree
+            $.get('http://135.181.132.154:5006/trees/' + (Number(feature.properties.id) + 1), (data) => {
+                var filter : any[] = ['in', 'id'];
+                console.log(data);
+                for (const c in data.counts) {
+                    //console.log(c);
+                    var edgeId = Number(c);
+                    if (edgeId < 0) {
+                        edgeId = -edgeId;
+                    }
+                    //edgeId = edgeId - 1;
+                    //console.log(edgeId);
+                    filter.push(edgeId);
+                }
+                map.setFilter('bicycle-counts', filter);
+            });
+
+
+            // // Run through the selected features and set a filter
+            // // to match features with unique FIPS codes to activate
+            // // the `counties-highlighted` layer.
+            // var filter = features.reduce(
+            //     function (memo, feature) {
+            //         memo.push(feature.properties.id);
+            //         return memo;
+            //     },
+            //     ['in', 'id']
+            // );
+
+            // console.log(filter);
+
+            // if (filter.length < 3) {
+            // } else {
+            //     map.setFilter('bicycle-counts', filter);
+            // }
         });
 
         // map.addLayer({
