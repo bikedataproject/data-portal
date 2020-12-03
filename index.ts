@@ -46,9 +46,12 @@ map.on('load', function () {
         }
     }
 
+    var bicycleCountsApi = "http://localhost:5000";
+
     map.addSource("bicycle-counts", {
         type: 'vector',
-        url: 'http://135.181.132.154:5006/tiles/mvt.json'
+        url: bicycleCountsApi + '/tiles/mvt.json',
+        promoteId: {"bikedata": "id"}
     });
 
     map.addLayer({
@@ -67,6 +70,54 @@ map.on('load', function () {
                 14, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 10], 0.1], 20]
             ]
         }
+    }, lowestSymbol);
+
+    map.addLayer({
+        'id': 'bicycle-counts-hover',
+        'type': 'line',
+        'source': 'bicycle-counts',
+        'source-layer': 'bikedata',
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        'paint': {
+            'line-color': '#fff',
+            'line-width': 5
+        },
+        "filter": ["in", "id", 0]
+    }, lowestSymbol);
+
+    map.addLayer({
+        'id': 'bicycle-counts-origins',
+        'type': 'line',
+        'source': 'bicycle-counts',
+        'source-layer': 'bikedata',
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        'paint': {
+            'line-color': '#0000ff',
+            'line-width': ["number", ["feature-state", "count"]]
+        },
+        "filter": ["in", "id", 0]
+    }, lowestSymbol);
+
+    map.addLayer({
+        'id': 'bicycle-counts-destinations',
+        'type': 'line',
+        'source': 'bicycle-counts',
+        'source-layer': 'bikedata',
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        'paint': {
+            'line-color': '#ff0000',
+            'line-width': ["number", ["feature-state", "count"]]
+        },
+        "filter": ["in", "id", 0]
     }, lowestSymbol);
 
     map.addSource("heatmap", {
@@ -203,6 +254,153 @@ map.on('load', function () {
     //     map.querySourceFeatures()
     // });
 
+    map.on('click', function (e) {
+        // set bbox as 5px reactangle area around clicked point
+        var bbox = [
+            [e.point.x - 5, e.point.y - 5],
+            [e.point.x + 5, e.point.y + 5]
+        ];
+        var features = map.queryRenderedFeatures(bbox, {
+            layers: ['bicycle-counts']
+        });
+
+        var originFilter: any[] = ['in', 'id', 0];
+        var destinationFilter: any[] = ['in', 'id', 0];
+        if (features.length == 0) {
+            map.setFilter('bicycle-counts', undefined);
+            map.setFilter('bicycle-counts-origins', originFilter);
+            map.setFilter('bicycle-counts-destinations', destinationFilter);
+            return;
+        }
+
+        var feature = features[0];
+
+        var filter: any[] = ['in', 'id', feature.properties.id];
+        map.setFilter('bicycle-counts', filter);
+
+        // get tree forward
+        $.get(bicycleCountsApi + '/trees/' + (Number(feature.properties.id) + 1), (data) => {
+            console.log(data);
+            for (const c in data.destinations) {
+                var count = Number(data.destinations[c]);
+                var edgeId = Number(c);
+                if (edgeId < 0) {
+                    edgeId = -edgeId;
+                }
+                edgeId = edgeId - 1;
+                destinationFilter.push(edgeId);
+
+                map.setFeatureState({
+                    id: edgeId,
+                    source: "bicycle-counts",
+                    sourceLayer: "bikedata"
+                }, {
+                    count: count
+                });
+            }
+            for (const c in data.origins) {
+                var count = Number(data.origins[c]);
+                var edgeId = Number(c);
+                if (edgeId < 0) {
+                    edgeId = -edgeId;
+                }
+                edgeId = edgeId - 1;
+                originFilter.push(edgeId);
+
+                map.setFeatureState({
+                    id: edgeId,
+                    source: "bicycle-counts",
+                    sourceLayer: "bikedata"
+                }, {
+                    count: count
+                });
+            }
+
+            map.setFilter('bicycle-counts-origins', originFilter);
+            map.setFilter('bicycle-counts-destinations', destinationFilter);
+        });
+
+        // // get tree backward
+        // $.get(bicycleCountsApi + '/trees/' + (-(Number(feature.properties.id) + 1)), (data) => {
+        //     console.log(data);
+        //     for (const c in data.destinations) {
+        //         var edgeId = Number(c);
+        //         if (edgeId < 0) {
+        //             edgeId = -edgeId;
+        //         }
+        //         edgeId = edgeId - 1;
+        //         filter.push(edgeId);
+        //     }
+        //     for (const c in data.origins) {
+        //         var edgeId = Number(c);
+        //         if (edgeId < 0) {
+        //             edgeId = -edgeId;
+        //         }
+        //         edgeId = edgeId - 1;
+        //         filter.push(edgeId);
+        //     }
+        //     map.setFilter('bicycle-counts', filter);
+        // });
+
+
+        // // Run through the selected features and set a filter
+        // // to match features with unique FIPS codes to activate
+        // // the `counties-highlighted` layer.
+        // var filter = features.reduce(
+        //     function (memo, feature) {
+        //         memo.push(feature.properties.id);
+        //         return memo;
+        //     },
+        //     ['in', 'id']
+        // );
+
+        // console.log(filter);
+
+        // if (filter.length < 3) {
+        // } else {
+        //     map.setFilter('bicycle-counts', filter);
+        // }
+    });
+    
+    var hoveredStateId = null;
+
+    // When the user moves their mouse over the state-fill layer, we'll update the
+    // feature state for the feature under the mouse.
+    map.on('mousemove', 'bicycle-counts-origins', function (e) {
+        if (e.features.length > 0) {
+            if (hoveredStateId) {
+                map.setFeatureState({ 
+                        source: 'bicycle-counts', 
+                        sourceLayer: "bikedata",
+                        id: hoveredStateId 
+                    },
+                    { hover: false }
+                );
+            }
+            hoveredStateId = e.features[0].id;
+            map.setFeatureState(
+                { 
+                    source: 'bicycle-counts', 
+                    sourceLayer: "bikedata",
+                    id: hoveredStateId 
+                },
+                { hover: true }
+            );
+        }
+    });
+
+    // When the mouse leaves the state-fill layer, update the feature state of the
+    // previously hovered feature.
+    map.on('mouseleave', 'state-fills', function () {
+        if (hoveredStateId) {
+            map.setFeatureState(
+                { source: 'states', id: hoveredStateId },
+                { hover: false }
+            );
+        }
+        hoveredStateId = null;
+    });
+
     $.get('all_statistics.json', function (data) {
         console.log(data);
 
@@ -234,60 +432,6 @@ map.on('load', function () {
                     }
                 });
             }
-        });
-
-        map.on('click', function (e) {
-            // set bbox as 5px reactangle area around clicked point
-            var bbox = [
-                [e.point.x - 5, e.point.y - 5],
-                [e.point.x + 5, e.point.y + 5]
-            ];
-            var features = map.queryRenderedFeatures(bbox, {
-                layers: ['bicycle-counts']
-            });
-
-            if (features.length == 0) {
-                map.setFilter('bicycle-counts', undefined);
-                return;
-            }
-            
-            var feature = features[0];
-
-            // get tree
-            $.get('http://135.181.132.154:5006/trees/' + (Number(feature.properties.id) + 1), (data) => {
-                var filter : any[] = ['in', 'id'];
-                console.log(data);
-                for (const c in data.counts) {
-                    //console.log(c);
-                    var edgeId = Number(c);
-                    if (edgeId < 0) {
-                        edgeId = -edgeId;
-                    }
-                    //edgeId = edgeId - 1;
-                    //console.log(edgeId);
-                    filter.push(edgeId);
-                }
-                map.setFilter('bicycle-counts', filter);
-            });
-
-
-            // // Run through the selected features and set a filter
-            // // to match features with unique FIPS codes to activate
-            // // the `counties-highlighted` layer.
-            // var filter = features.reduce(
-            //     function (memo, feature) {
-            //         memo.push(feature.properties.id);
-            //         return memo;
-            //     },
-            //     ['in', 'id']
-            // );
-
-            // console.log(filter);
-
-            // if (filter.length < 3) {
-            // } else {
-            //     map.setFilter('bicycle-counts', filter);
-            // }
         });
 
         // map.addLayer({
