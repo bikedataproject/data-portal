@@ -83,9 +83,13 @@ map.on('load', function () {
         },
         'paint': {
             'line-color': '#fff',
-            'line-width': 5
-        },
-        "filter": ["in", "id", 0]
+            'line-width': [
+                'case',
+                ['boolean', ['feature-state', 'hover'], false],
+                ["number", ["feature-state", "count"]],
+                0
+            ]
+        }
     }, lowestSymbol);
 
     map.addLayer({
@@ -102,7 +106,7 @@ map.on('load', function () {
             'line-width': ["number", ["feature-state", "count"]]
         },
         "filter": ["in", "id", 0]
-    }, lowestSymbol);
+    }, "bicycle-counts-hover");
 
     map.addLayer({
         'id': 'bicycle-counts-destinations',
@@ -118,7 +122,7 @@ map.on('load', function () {
             'line-width': ["number", ["feature-state", "count"]]
         },
         "filter": ["in", "id", 0]
-    }, lowestSymbol);
+    }, "bicycle-counts-hover");
 
     map.addSource("heatmap", {
         type: 'vector',
@@ -270,6 +274,12 @@ map.on('load', function () {
             map.setFilter('bicycle-counts', undefined);
             map.setFilter('bicycle-counts-origins', originFilter);
             map.setFilter('bicycle-counts-destinations', destinationFilter);
+
+            map.removeFeatureState({ 
+                source: 'bicycle-counts', 
+                sourceLayer: "bikedata"
+            });
+
             return;
         }
 
@@ -386,19 +396,49 @@ map.on('load', function () {
                 },
                 { hover: true }
             );
+
+            var state = map.getFeatureState({ 
+                source: 'bicycle-counts', 
+                sourceLayer: "bikedata",
+                id: hoveredStateId 
+            });
+            console.log("count: " + state.count);
         }
     });
 
-    // When the mouse leaves the state-fill layer, update the feature state of the
-    // previously hovered feature.
-    map.on('mouseleave', 'state-fills', function () {
-        if (hoveredStateId) {
+    map.on('mousemove', 'bicycle-counts-destinations', function (e) {
+        if (e.features.length > 0) {
+            if (hoveredStateId) {
+                map.setFeatureState({ 
+                        source: 'bicycle-counts', 
+                        sourceLayer: "bikedata",
+                        id: hoveredStateId 
+                    },
+                    { hover: false }
+                );
+            }
+            hoveredStateId = e.features[0].id;
             map.setFeatureState(
-                { source: 'states', id: hoveredStateId },
-                { hover: false }
+                { 
+                    source: 'bicycle-counts', 
+                    sourceLayer: "bikedata",
+                    id: hoveredStateId 
+                },
+                { hover: true }
             );
+
+            var state = map.getFeatureState({ 
+                source: 'bicycle-counts', 
+                sourceLayer: "bikedata",
+                id: hoveredStateId 
+            });
+            console.log("count: " + state.count);
+        } else {
+            map.removeFeatureState({ 
+                source: 'bicycle-counts', 
+                sourceLayer: "bikedata"
+            }, 'hover');
         }
-        hoveredStateId = null;
     });
 
     $.get('all_statistics.json', function (data) {
