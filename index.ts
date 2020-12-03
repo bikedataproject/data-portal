@@ -124,6 +124,20 @@ map.on('load', function () {
         "filter": ["in", "id", 0]
     }, "bicycle-counts-hover");
 
+    // map.addLayer({
+    //     'id': 'bicycle-counts-destinations-numbers',
+    //     'type': 'symbol',
+    //     'source': 'bicycle-counts',
+    //     'source-layer': 'bikedata',
+    //     'layout': {
+    //         "text-field": "{count}"
+    //     },
+    //     'paint': {
+    //         'visibility': ["boolean", ["feature-state", "count"], false]
+    //     },
+    //     "filter": ["in", "id", 0]
+    // }, "bicycle-counts-hover");
+
     map.addSource("heatmap", {
         type: 'vector',
         //url: 'local-mvt.json'
@@ -265,7 +279,7 @@ map.on('load', function () {
             [e.point.x + 5, e.point.y + 5]
         ];
         var features = map.queryRenderedFeatures(bbox, {
-            layers: ['bicycle-counts']
+            layers: ['bicycle-counts', 'bicycle-counts-origins', 'bicycle-counts-destinations']
         });
 
         var originFilter: any[] = ['in', 'id', 0];
