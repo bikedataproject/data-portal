@@ -46,7 +46,8 @@ map.on('load', function () {
         }
     }
 
-    var bicycleCountsApi = "http://localhost:5000";
+    var bicycleCountsApi = "https://api.bikedataproject.org/count";
+    //var bicycleCountsApi = "http://localhost:5000";
 
     map.addSource("bicycle-counts", {
         type: 'vector',
@@ -86,7 +87,7 @@ map.on('load', function () {
             'line-width': [
                 'case',
                 ['boolean', ['feature-state', 'hover'], false],
-                ["number", ["feature-state", "count"]],
+                ["min", ["number", ["feature-state", "count"]], 10],
                 0
             ]
         }
@@ -103,7 +104,7 @@ map.on('load', function () {
         },
         'paint': {
             'line-color': '#0000ff',
-            'line-width': ["number", ["feature-state", "count"]]
+            'line-width': ["min", ["number", ["feature-state", "count"]], 10]
         },
         "filter": ["in", "id", 0]
     }, "bicycle-counts-hover");
@@ -119,7 +120,7 @@ map.on('load', function () {
         },
         'paint': {
             'line-color': '#ff0000',
-            'line-width': ["number", ["feature-state", "count"]]
+            'line-width': ["min", ["number", ["feature-state", "count"]], 10]
         },
         "filter": ["in", "id", 0]
     }, "bicycle-counts-hover");
