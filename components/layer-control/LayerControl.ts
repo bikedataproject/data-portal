@@ -1,6 +1,7 @@
 import { IControl, Map, MapDataEvent } from "mapbox-gl";
 import { LayerConfig } from "./LayerConfig";
 import './*.css';
+import { EventsHub } from "../../libs/events/EventsHub";
 
 export class LayerControl implements IControl {
     layers: LayerConfig[];
@@ -8,12 +9,18 @@ export class LayerControl implements IControl {
     element: HTMLElement;
     navElement: HTMLElement;
 
-    constructor(layers: LayerConfig[]) {
-        this.layers = layers;
+    events: EventsHub<LayerConfig> = new EventsHub();
 
-        for (var l = 0; l < this.layers.length; l++) {
-            this.layers[l].visible = true;
+    constructor(layers?: LayerConfig[]) {
+        if (layers) {
+            this.layers = layers;
+        } else {
+            this.layers = [];
         }
+    }
+
+    on(name: string | string[], callback: (args: LayerConfig) => void) {
+        this.events.on(name, callback);
     }
 
     onAdd(map: mapboxgl.Map): HTMLElement {
@@ -41,10 +48,45 @@ export class LayerControl implements IControl {
 
     }
 
+    addLayer(layerConfig: LayerConfig): number {
+        var id = this.layers.length;
+        this.layers.push(layerConfig);
+
+        // update layers
+        this._buildLayers();
+
+        return id;
+    }
+
+    removeLayer(id: number) {
+        this.layers = this.layers.splice(id, 1);
+
+        // update layers
+        this._buildLayers();
+    }
+
     private _onMapData(e: MapDataEvent) {
         if (e.type != "style") return;
 
         this._buildLayers();
+    }
+
+    private hide(layerConfig: LayerConfig) {        
+        layerConfig.layers.forEach(lid => {
+            this.toggleLayer(lid, false);
+        });
+        layerConfig.visible = false;
+
+        this.events.trigger("hide", layerConfig);
+    }
+
+    private show(layerConfig: LayerConfig) {        
+        layerConfig.layers.forEach(lid => {
+            this.toggleLayer(lid, true);
+        });
+        layerConfig.visible = true;
+
+        this.events.trigger("show", layerConfig);
     }
 
     private toggleLayer(layerId: string, visible: boolean) {
@@ -54,6 +96,7 @@ export class LayerControl implements IControl {
 
         if (visible) {
             this.map.setLayoutProperty(layerId, "visibility", "visible");
+
         } else {
             this.map.setLayoutProperty(layerId, "visibility", "none");
         }
@@ -62,27 +105,23 @@ export class LayerControl implements IControl {
     private _buildLayers() {
         this.navElement.innerHTML = "";
 
-        this.layers.forEach(l => {
+        for (var i = 0; i < this.layers.length; i++){
+            var layerConfig = this.layers[i];
+
             var layerButton = document.createElement("a");
             layerButton.href.link("#");
             layerButton.classList.add("btn");
             layerButton.type = "button";
-            layerButton.innerHTML = l.name;
-            if (l.visible) {
+            layerButton.innerHTML = layerConfig.name;
+            if (layerConfig.visible) {
                 layerButton.classList.add("active");
             }
             layerButton.addEventListener("click", e => {
-                if (l.visible) {
-                    l.layers.forEach(lid => {
-                        this.toggleLayer(lid, false);
-                    });
-                    l.visible = false;
+                if (layerConfig.visible) {
+                    this.hide(layerConfig);
                     layerButton.classList.remove("active");
                 } else {
-                    l.layers.forEach(lid => {
-                        this.toggleLayer(lid, true);
-                    });
-                    l.visible = true;
+                    this.show(layerConfig);
                     layerButton.classList.add("active");
                 }
             });

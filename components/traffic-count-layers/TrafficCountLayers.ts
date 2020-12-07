@@ -2,6 +2,8 @@ import { TrafficCountsApi } from "../../apis/traffic-counts-api/TrafficCountsApi
 import { Map, MapMouseEvent, EventData, Marker, PointLike } from 'mapbox-gl';
 import { DirectedEdgeId } from "../../apis/traffic-counts-api/DirectedEdgeId";
 import { TrafficCountTree } from "../../apis/traffic-counts-api/TrafficCountTree";
+import { LayerControl } from "../layer-control/LayerControl";
+import { LayerConfig } from "../layer-control/LayerConfig";
 
 export class TrafficCountLayers {
     private readonly api: TrafficCountsApi;
@@ -10,6 +12,8 @@ export class TrafficCountLayers {
     private map: Map;
     private hoveredId: number;
     private selectedTree: TrafficCountTree;
+
+    active: boolean = true;
 
     constructor(api: TrafficCountsApi) {
         this.api = api;
@@ -109,7 +113,7 @@ export class TrafficCountLayers {
                 ]
             }
         }, `${this.layerPrefix}_counts-hover`);
-    
+
         map.addLayer({
             'id': `${this.layerPrefix}_counts-destinations`,
             'type': 'line',
@@ -129,7 +133,7 @@ export class TrafficCountLayers {
                 ]
             }
         }, `${this.layerPrefix}_counts-hover`);
-    
+
         map.addLayer({
             'id': `${this.layerPrefix}_counts-routes`,
             'type': 'line',
@@ -170,7 +174,7 @@ export class TrafficCountLayers {
                     var f = features[i];
                     var state = this.map.getFeatureState(f);
                     if (state && state.origin) {
-                        e.features = [ f ];
+                        e.features = [f];
                         this._onMouseMoveOrigins(e);
                         return;
                     }
@@ -180,13 +184,13 @@ export class TrafficCountLayers {
             // check destinations layer.
             var features = this.map.queryRenderedFeatures(bbox, {
                 layers: [`${this.layerPrefix}_counts-destinations`]
-            });   
+            });
             if (features.length > 0) {
                 for (var i = 0; i < features.length; i++) {
                     var f = features[i];
                     var state = this.map.getFeatureState(f);
                     if (state && state.destination) {
-                        e.features = [ f ];
+                        e.features = [f];
                         this._onMouseMoveDestinations(e);
                         return;
                     }
@@ -195,7 +199,55 @@ export class TrafficCountLayers {
         });
     }
 
+    activate(): void {
+        this.active = true;
+    }
+
+    disactivate(): void {
+        this.active = false;
+    }
+
+    hookLayerControl(layerControl: LayerControl) {
+        var layerConfig: LayerConfig = {
+            name: 'Bicycle Counts',
+            layers: [
+                `${this.layerPrefix}_counts`,
+                `${this.layerPrefix}_counts-hover`,
+                `${this.layerPrefix}_counts-origins`,
+                `${this.layerPrefix}_counts-destinations`,
+                `${this.layerPrefix}_counts-routes`
+            ],
+            visible: true
+        };
+
+        layerControl.addLayer(layerConfig);
+
+        var me = this;
+        layerControl.on('show', c => {
+            if (c.name != layerConfig.name) return;
+
+            me._reset();
+            me.active = true;
+        });
+        layerControl.on('hide', c => {
+            if (c.name != layerConfig.name) return;
+
+            me.active = false;
+        });
+    }
+
+    private _reset(): void {
+        console.log("resetting");
+        // there no features are selected, reset state.
+        this.map.setLayoutProperty(`${this.layerPrefix}_counts`, 'visibility', 'visible');
+        this.map.removeFeatureState({
+            source: `${this.layerPrefix}_counts`,
+            sourceLayer: "bikedata"
+        });
+    }
+
     private _onMapClick(e: MapMouseEvent & EventData) {
+        if (!this.active) return;
 
         // get features aroud the clicked point.
         var bbox: [PointLike, PointLike] = [
@@ -207,12 +259,7 @@ export class TrafficCountLayers {
         });
 
         if (features.length == 0) {
-            // there no features are selected, reset state.
-            this.map.setLayoutProperty(`${this.layerPrefix}_counts`, 'visibility', 'visible');
-            this.map.removeFeatureState({
-                source: `${this.layerPrefix}_counts`,
-                sourceLayer: "bikedata"
-            });
+            this._reset();
             return;
         }
 
@@ -225,7 +272,7 @@ export class TrafficCountLayers {
             for (var o in tree.originTree) {
                 var origin = tree.originTree[o];
                 var originDirectedId = new DirectedEdgeId(Number(o));
-                
+
                 this.map.setFeatureState({
                     id: originDirectedId.EdgeId(),
                     source: `${this.layerPrefix}_counts`,
@@ -240,7 +287,7 @@ export class TrafficCountLayers {
             for (var d in tree.destinationTree) {
                 var destination = tree.destinationTree[d];
                 var destinationDirectedId = new DirectedEdgeId(Number(d));
-                
+
                 this.map.setFeatureState({
                     id: destinationDirectedId.EdgeId(),
                     source: `${this.layerPrefix}_counts`,
@@ -257,6 +304,8 @@ export class TrafficCountLayers {
     }
 
     private _onMouseMoveOrigins(e: MapMouseEvent & EventData) {
+        if (!this.active) return;
+
         if (e.features.length > 0) {
             if (this.hoveredId) {
                 this.map.setFeatureState({
@@ -287,7 +336,7 @@ export class TrafficCountLayers {
             if (this.selectedTree.originTree != null) {
                 for (const c in this.selectedTree.originTree) {
                     var edgeId = new DirectedEdgeId(Number(c));
-    
+
                     this.map.removeFeatureState({
                         id: edgeId.EdgeId(),
                         source: `${this.layerPrefix}_counts`,
@@ -298,7 +347,7 @@ export class TrafficCountLayers {
                 if (this.selectedTree.destinationTree != null) {
                     for (const c in this.selectedTree.destinationTree) {
                         var edgeId = new DirectedEdgeId(Number(c));
-        
+
                         this.map.removeFeatureState({
                             id: edgeId.EdgeId(),
                             source: `${this.layerPrefix}_counts`,
@@ -328,7 +377,7 @@ export class TrafficCountLayers {
                             source: `${this.layerPrefix}_counts`,
                             sourceLayer: "bikedata",
                             id: edgeId.EdgeId()
-                        },{
+                        }, {
                             route: true
                         });
 
@@ -338,7 +387,7 @@ export class TrafficCountLayers {
                         if (next.edges == null) return;
                         next.edges.forEach(e => {
                             newQueue.push(e);
-                        });                        
+                        });
                     });
 
                     // move to next queue
@@ -349,6 +398,8 @@ export class TrafficCountLayers {
     }
 
     private _onMouseMoveDestinations(e: MapMouseEvent & EventData) {
+        if (!this.active) return;
+
         if (e.features.length > 0) {
             if (this.hoveredId) {
                 this.map.setFeatureState({
@@ -379,7 +430,7 @@ export class TrafficCountLayers {
             if (this.selectedTree.destinationTree != null) {
                 for (const c in this.selectedTree.destinationTree) {
                     var edgeId = new DirectedEdgeId(Number(c));
-    
+
                     this.map.removeFeatureState({
                         id: edgeId.EdgeId(),
                         source: `${this.layerPrefix}_counts`,
@@ -390,7 +441,7 @@ export class TrafficCountLayers {
                 if (this.selectedTree.originTree != null) {
                     for (const c in this.selectedTree.originTree) {
                         var edgeId = new DirectedEdgeId(Number(c));
-        
+
                         this.map.removeFeatureState({
                             id: edgeId.EdgeId(),
                             source: `${this.layerPrefix}_counts`,
@@ -420,7 +471,7 @@ export class TrafficCountLayers {
                             source: `${this.layerPrefix}_counts`,
                             sourceLayer: "bikedata",
                             id: edgeId.EdgeId()
-                        },{
+                        }, {
                             route: true
                         });
 
@@ -430,7 +481,7 @@ export class TrafficCountLayers {
                         if (next.edges == null) return;
                         next.edges.forEach(e => {
                             newQueue.push(e);
-                        });                        
+                        });
                     });
 
                     // move to next queue

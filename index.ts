@@ -1,4 +1,5 @@
 import { TrafficCountsApi } from './apis/traffic-counts-api/TrafficCountsApi';
+import { LayerControl } from './components/layer-control/LayerControl';
 import { TrafficCountLayers } from "./components/traffic-count-layers/TrafficCountLayers";
 
 var bicycleCountsApi = "https://api.bikedataproject.org/count";
@@ -16,9 +17,15 @@ var map = new mapboxgl.Map({
     maxZoom: 17
 });
 
+const layerControl = new LayerControl();
+map.addControl(layerControl, "top-left");
+
 map.addControl(new mapboxgl.NavigationControl());
 
 map.on('load', function () {
     // add bicycle count layers.
     trafficCountLayers.addToMap(map);   
+
+    // hook up layer control.
+    trafficCountLayers.hookLayerControl(layerControl);
 });
