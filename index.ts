@@ -5,7 +5,9 @@ import { TrafficCountLayers } from "./components/traffic-count-layers/TrafficCou
 var bicycleCountsApi = "https://api.bikedataproject.org/count";
 var trafficCountsApi = new TrafficCountsApi(bicycleCountsApi);
 
-var trafficCountLayers = new TrafficCountLayers(trafficCountsApi);
+var trafficCountLayers = new TrafficCountLayers(trafficCountsApi, { 
+    hover: false
+});
 
 var map = new mapboxgl.Map({
     container: 'map',

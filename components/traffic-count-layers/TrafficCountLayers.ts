@@ -12,12 +12,17 @@ export class TrafficCountLayers {
     private map: Map;
     private hoveredId: number;
     private selectedTree: TrafficCountTree;
+    private hover: boolean = true;
 
     active: boolean = true;
 
-    constructor(api: TrafficCountsApi) {
+    constructor(api: TrafficCountsApi, settings?: { hover?: boolean }) {
         this.api = api;
         this.layerPrefix = "todo-random-prefix_";
+
+        if (settings) {
+            if (this.hover != undefined) this.hover = settings.hover;
+        }
     }
 
     addToMap(map: Map) {
@@ -69,7 +74,7 @@ export class TrafficCountLayers {
                 'line-color': '#ffd700',
                 'line-width': ['interpolate', ['linear'], ['zoom'],
                     10, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 10], 0.1], 2],
-                    14, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 10], 0.1], 20]
+                    14, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 5], 0.1], 5]
                 ]
             }
         }, lowestSymbol);
@@ -306,6 +311,7 @@ export class TrafficCountLayers {
 
     private _onMouseMoveOrigins(e: MapMouseEvent & EventData) {
         if (!this.active) return;
+        if (!this.hover) return;
 
         if (e.features.length > 0) {
             if (this.hoveredId) {
@@ -400,6 +406,7 @@ export class TrafficCountLayers {
 
     private _onMouseMoveDestinations(e: MapMouseEvent & EventData) {
         if (!this.active) return;
+        if (!this.hover) return;
 
         if (e.features.length > 0) {
             if (this.hoveredId) {
