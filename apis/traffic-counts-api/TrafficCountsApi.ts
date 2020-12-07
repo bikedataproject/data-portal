@@ -12,6 +12,10 @@ export class TrafficCountsApi {
         this.key = key;
     }
 
+    mvtUrl(): string {
+        return `${ this.url }/tiles/mvt.json`;
+    }
+
     getTree(directedEdgeId: DirectedEdgeId, callback: (tree: TrafficCountTree) => void) {
         $.get(this.url + '/trees/' + directedEdgeId.Id(), (data) => {
             var count = Number(data.count);

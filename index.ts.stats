@@ -1,0 +1,135 @@
+ $.get('all_statistics.json', function (data) {
+        console.log(data);
+
+        map.addSource("areas", {
+            type: 'vector',
+            url: 'https://api.bikedataproject.org/tiles/areas/mvt.json',
+            promoteId: 'id'
+        });
+
+        map.on('data', function (e) {
+            if (e.type == "style") return;
+
+            if (e.isSourceLoaded) {
+                console.log("Setting states");
+                map.querySourceFeatures("areas", {
+                    sourceLayer: "areas"
+                }).forEach(function (f) {
+                    if (f.properties && f.properties.id) {
+                        var stats = data[f.properties.id];
+                        if (stats) {
+                            map.setFeatureState({
+                                source: "areas",
+                                sourceLayer: "areas",
+                                id: f.properties.id
+                            }, {
+                                count: stats.count
+                            });
+                        }
+                    }
+                });
+            }
+        });
+
+        // map.addLayer({
+        //     'id': 'areas-stats',
+        //     'type': 'fill',
+        //     'source': 'areas',
+        //     'source-layer': 'areas',
+        //     'maxzoom': 12,
+        //     'paint': {
+        //         'fill-color': 
+        //             ['case',
+        //                 ['==', ['feature-state', 'count'], null], 'rgba(255, 255, 255, 0)',
+        //                 ['>',  ['feature-state', 'count'], 0], 'rgba(255,220,75, 1)',
+        //                 'rgba(255, 255, 255, 0)'],
+        //         'fill-opacity': 0.1
+        //     }
+        // }, "heatmap-heat");
+
+        // map.addLayer({
+        //     'id': 'areas-stats-boundaries',
+        //     'type': 'line',
+        //     'source': 'areas',
+        //     'source-layer': 'areas',
+        //     'layout': {
+        //         'line-join': 'round',
+        //         'line-cap': 'round'
+        //     },
+        //     'paint': {
+        //         'line-color': '#ffd700',
+        //         'line-width': 1
+        //     }
+        // });
+
+        // map.addLayer(
+        //     {
+        //         'id': 'areas-stats-selected',
+        //         'type': 'fill',
+        //         'source': 'areas',
+        //         'source-layer': 'areas',
+        //         'paint': {
+        //             'fill-outline-color': '#484896',
+        //             'fill-color': '#6e599f',
+        //             'fill-opacity': 0.75
+        //         },
+        //         'filter': ['in', 'id', '']
+        //     }, 'areas-stats-boundaries');
+
+        // map.on('mousemove', 'areas-stats', function (e) {
+
+        //     map.getCanvas().style.cursor = 'pointer';
+
+        //     var feature = e.features[0];
+        //     console.log(feature);
+
+        //     overlay.innerHTML = '';
+
+        //     var title = document.createElement('strong');
+        //     title.textContent =
+        //         feature.properties.name;
+
+        //     var population = document.createElement('div');
+        //     population.textContent =
+        //         'Total KMs: ' + feature.properties.km + ' ' +                    
+        //         'Total Time: ' + feature.properties.seconds + ' ' +                    
+        //         'Total Trips: ' + feature.properties.count;
+
+        //     overlay.appendChild(title);
+        //     overlay.appendChild(population);
+        //     overlay.style.display = 'block';
+
+        //     map.setFilter('areas-stats-selected', [
+        //         'in',
+        //         'id',
+        //         feature.properties.id
+        //     ]);
+
+        //     popup
+        //         .setLngLat(e.lngLat)
+        //         .setText(feature.properties.name)
+        //         .addTo(map);
+        // });
+
+        // map.on('mouseleave', 'areas-stats', function () {
+        //     map.getCanvas().style.cursor = '';
+        //     popup.remove();
+        //     map.setFilter('areas-stats-selected', ['in', 'id', '']);
+        //     overlay.style.display = 'none';
+        // });
+
+        // // Check if `statsData` source is loaded.
+        // function setAfterLoad(e) {
+        //     if (e.sourceId === 'areas' && e.isSourceLoaded) {
+        //         setStats();
+        //         map.off('sourcedata', setAfterLoad);
+        //     }
+        // }
+
+        // // If `areas` source is loaded, call `setStats()`.
+        // if (map.isSourceLoaded('areas')) {
+        //     setStats();
+        // } else {
+        //     map.on('sourcedata', setAfterLoad);
+        // }
+    });
