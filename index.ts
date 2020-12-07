@@ -1,8 +1,7 @@
 import { TrafficCountsApi } from './apis/traffic-counts-api/TrafficCountsApi';
 import { TrafficCountLayers } from "./components/traffic-count-layers/TrafficCountLayers";
 
-// var bicycleCountsApi = "https://api.bikedataproject.org/count";
-var bicycleCountsApi = "http://localhost:5000";
+var bicycleCountsApi = "https://api.bikedataproject.org/count";
 var trafficCountsApi = new TrafficCountsApi(bicycleCountsApi);
 
 var trafficCountLayers = new TrafficCountLayers(trafficCountsApi);
