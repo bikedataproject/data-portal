@@ -1,4 +1,11 @@
 import * as $ from "jquery";
+import { DirectedEdgeId } from "./apis/traffic-counts-api/DirectedEdgeId";
+import { TrafficCountsApi } from './apis/traffic-counts-api/TrafficCountsApi';
+import { TrafficCountTree } from "./apis/traffic-counts-api/TrafficCountTree";
+
+// var bicycleCountsApi = "https://api.bikedataproject.org/count";
+var bicycleCountsApi = "http://localhost:5000";
+var trafficCountsApi = new TrafficCountsApi(bicycleCountsApi);
 
 var map = new mapboxgl.Map({
     container: 'map',
@@ -46,13 +53,11 @@ map.on('load', function () {
         }
     }
 
-    var bicycleCountsApi = "https://api.bikedataproject.org/count";
-    //var bicycleCountsApi = "http://localhost:5000";
 
     map.addSource("bicycle-counts", {
         type: 'vector',
         url: bicycleCountsApi + '/tiles/mvt.json',
-        promoteId: {"bikedata": "id"}
+        promoteId: { "bikedata": "id" }
     });
 
     map.addLayer({
@@ -104,9 +109,13 @@ map.on('load', function () {
         },
         'paint': {
             'line-color': '#0000ff',
-            'line-width': ["min", ["number", ["feature-state", "count"]], 10]
-        },
-        "filter": ["in", "id", 0]
+            'line-width': [
+                'case',
+                ['boolean', ['feature-state', 'origin'], false],
+                ["min", ["number", ["feature-state", "origin_count"]], 5],
+                0
+            ]
+        }
     }, "bicycle-counts-hover");
 
     map.addLayer({
@@ -120,10 +129,34 @@ map.on('load', function () {
         },
         'paint': {
             'line-color': '#ff0000',
-            'line-width': ["min", ["number", ["feature-state", "count"]], 10]
-        },
-        "filter": ["in", "id", 0]
+            'line-width': [
+                'case',
+                ['boolean', ['feature-state', 'destination'], false],
+                ["min", ["number", ["feature-state", "destination_count"]], 5],
+                0
+            ]
+        }
     }, "bicycle-counts-hover");
+
+    map.addLayer({
+        'id': 'bicycle-counts-routes',
+        'type': 'line',
+        'source': 'bicycle-counts',
+        'source-layer': 'bikedata',
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        'paint': {
+            'line-color': '#fff',
+            'line-width': [
+                'case',
+                ['boolean', ['feature-state', 'route'], false],
+                10,
+                0
+            ]
+        }
+    }, lowestSymbol);
 
     // map.addLayer({
     //     'id': 'bicycle-counts-destinations-numbers',
@@ -273,25 +306,24 @@ map.on('load', function () {
     //     map.querySourceFeatures()
     // });
 
+    var selectedTree: TrafficCountTree = {};
+
     map.on('click', function (e) {
         // set bbox as 5px reactangle area around clicked point
         var bbox = [
             [e.point.x - 5, e.point.y - 5],
             [e.point.x + 5, e.point.y + 5]
         ];
-        var features = map.queryRenderedFeatures(bbox, {
-            layers: ['bicycle-counts', 'bicycle-counts-origins', 'bicycle-counts-destinations']
-        });
 
-        var originFilter: any[] = ['in', 'id', 0];
-        var destinationFilter: any[] = ['in', 'id', 0];
+        var features = map.queryRenderedFeatures(bbox, {
+            layers: ['bicycle-counts']
+        });
+        
         if (features.length == 0) {
             map.setFilter('bicycle-counts', undefined);
-            map.setFilter('bicycle-counts-origins', originFilter);
-            map.setFilter('bicycle-counts-destinations', destinationFilter);
 
-            map.removeFeatureState({ 
-                source: 'bicycle-counts', 
+            map.removeFeatureState({
+                source: 'bicycle-counts',
                 sourceLayer: "bikedata"
             });
 
@@ -304,47 +336,41 @@ map.on('load', function () {
         map.setFilter('bicycle-counts', filter);
 
         // get tree forward
-        $.get(bicycleCountsApi + '/trees/' + (Number(feature.properties.id) + 1), (data) => {
-            console.log(data);
-            for (const c in data.destinations) {
-                var count = Number(data.destinations[c]);
-                var edgeId = Number(c);
-                if (edgeId < 0) {
-                    edgeId = -edgeId;
-                }
-                edgeId = edgeId - 1;
-                destinationFilter.push(edgeId);
+        trafficCountsApi.getTree(DirectedEdgeId.ToDirectedEdgeId(feature.properties.id, true), (tree) => {
+            selectedTree = tree;
 
+            for (var o in tree.originTree) {
+                var origin = tree.originTree[o];
+                var originDirectedId = new DirectedEdgeId(Number(o));
+                
                 map.setFeatureState({
-                    id: edgeId,
+                    id: originDirectedId.EdgeId(),
                     source: "bicycle-counts",
                     sourceLayer: "bikedata"
                 }, {
-                    count: count
+                    origin_count: origin.count,
+                    origin_id: originDirectedId.Id(),
+                    origin: true
                 });
             }
-            for (const c in data.origins) {
-                var count = Number(data.origins[c]);
-                var edgeId = Number(c);
-                if (edgeId < 0) {
-                    edgeId = -edgeId;
-                }
-                edgeId = edgeId - 1;
-                originFilter.push(edgeId);
 
+            for (var d in tree.destinationTree) {
+                var destination = tree.destinationTree[d];
+                var destinationDirectedId = new DirectedEdgeId(Number(d));
+                
                 map.setFeatureState({
-                    id: edgeId,
+                    id: destinationDirectedId.EdgeId(),
                     source: "bicycle-counts",
                     sourceLayer: "bikedata"
                 }, {
-                    count: count
+                    destination_count: destination.count,
+                    destination_id: destinationDirectedId.Id(),
+                    destination: true
                 });
             }
-
-            map.setFilter('bicycle-counts-origins', originFilter);
-            map.setFilter('bicycle-counts-destinations', destinationFilter);
         });
 
+        
         // // get tree backward
         // $.get(bicycleCountsApi + '/trees/' + (-(Number(feature.properties.id) + 1)), (data) => {
         //     console.log(data);
@@ -386,73 +412,212 @@ map.on('load', function () {
         //     map.setFilter('bicycle-counts', filter);
         // }
     });
-    
-    var hoveredStateId = null;
 
-    // When the user moves their mouse over the state-fill layer, we'll update the
-    // feature state for the feature under the mouse.
+    var hoveredId = null;
+
     map.on('mousemove', 'bicycle-counts-origins', function (e) {
         if (e.features.length > 0) {
-            if (hoveredStateId) {
-                map.setFeatureState({ 
-                        source: 'bicycle-counts', 
-                        sourceLayer: "bikedata",
-                        id: hoveredStateId 
-                    },
+            if (hoveredId) {
+                map.setFeatureState({
+                    source: 'bicycle-counts',
+                    sourceLayer: "bikedata",
+                    id: hoveredId
+                },
                     { hover: false }
                 );
             }
-            hoveredStateId = e.features[0].id;
+            hoveredId = e.features[0].id;
             map.setFeatureState(
-                { 
-                    source: 'bicycle-counts', 
+                {
+                    source: 'bicycle-counts',
                     sourceLayer: "bikedata",
-                    id: hoveredStateId 
+                    id: hoveredId
                 },
                 { hover: true }
             );
 
-            var state = map.getFeatureState({ 
-                source: 'bicycle-counts', 
+            var state = map.getFeatureState({
+                source: 'bicycle-counts',
                 sourceLayer: "bikedata",
-                id: hoveredStateId 
+                id: hoveredId
             });
-            console.log("count: " + state.count);
+            console.log(state);
+
+            // do routes layer
+
+            if (originTree != null) {
+                for (const c in originTree) {
+                    var edgeId = Number(c);
+                    if (edgeId < 0) {
+                        edgeId = -edgeId;
+                    }
+                    edgeId = edgeId - 1;
+    
+                    map.removeFeatureState({
+                        id: edgeId,
+                        source: "bicycle-counts",
+                        sourceLayer: "bikedata"
+                    }, 'route');
+                }
+                for (const c in destinationTree) {
+                    var edgeId = Number(c);
+                    if (edgeId < 0) {
+                        edgeId = -edgeId;
+                    }
+                    edgeId = edgeId - 1;
+    
+                    map.removeFeatureState({
+                        id: edgeId,
+                        source: "bicycle-counts",
+                        sourceLayer: "bikedata"
+                    }, 'route');
+                }
+
+                var settled = {};
+                var queue = [];
+                queue.push(state.directedId);
+                while (queue.length > 0) {
+                    var newQueue = [];
+
+                    // process the current queue
+                    // build the next queue
+                    queue.forEach(q => {
+                        // settle
+                        if (settled[q]) return;
+                        settled[q] = true;
+
+                        // convert to edge id.
+                        var edgeId = q;
+                        if (edgeId < 0) {
+                            edgeId = -edgeId;
+                        }
+                        edgeId = edgeId - 1;
+
+                        // set route state, making the edge visible
+                        map.setFeatureState({
+                            source: 'bicycle-counts',
+                            sourceLayer: "bikedata",
+                            id: edgeId
+                        },{
+                            route: true
+                        });
+
+                        // move to the next edges
+                        var next = originTree[q];
+                        if (next == null) return;
+                        if (next.edges == null) return;
+                        next.edges.forEach(e => {
+                            newQueue.push(e);
+                        });                        
+                    });
+
+                    // move to next queue
+                    queue = newQueue;
+                }
+            }
         }
     });
 
     map.on('mousemove', 'bicycle-counts-destinations', function (e) {
         if (e.features.length > 0) {
-            if (hoveredStateId) {
-                map.setFeatureState({ 
-                        source: 'bicycle-counts', 
-                        sourceLayer: "bikedata",
-                        id: hoveredStateId 
-                    },
+            if (hoveredId) {
+                map.setFeatureState({
+                    source: 'bicycle-counts',
+                    sourceLayer: "bikedata",
+                    id: hoveredId
+                },
                     { hover: false }
                 );
             }
-            hoveredStateId = e.features[0].id;
+            hoveredId = e.features[0].id;
             map.setFeatureState(
-                { 
-                    source: 'bicycle-counts', 
+                {
+                    source: 'bicycle-counts',
                     sourceLayer: "bikedata",
-                    id: hoveredStateId 
+                    id: hoveredId
                 },
                 { hover: true }
             );
 
-            var state = map.getFeatureState({ 
-                source: 'bicycle-counts', 
+            var state = map.getFeatureState({
+                source: 'bicycle-counts',
                 sourceLayer: "bikedata",
-                id: hoveredStateId 
+                id: hoveredId
             });
-            console.log("count: " + state.count);
-        } else {
-            map.removeFeatureState({ 
-                source: 'bicycle-counts', 
-                sourceLayer: "bikedata"
-            }, 'hover');
+            console.log(state);
+
+            // do routes layer
+
+            if (destinationTree != null) {
+                for (const c in destinationTree) {
+                    var edgeId = Number(c);
+                    if (edgeId < 0) {
+                        edgeId = -edgeId;
+                    }
+                    edgeId = edgeId - 1;
+    
+                    map.removeFeatureState({
+                        id: edgeId,
+                        source: "bicycle-counts",
+                        sourceLayer: "bikedata"
+                    }, 'route');
+                }
+                for (const c in originTree) {
+                    var edgeId = Number(c);
+                    if (edgeId < 0) {
+                        edgeId = -edgeId;
+                    }
+                    edgeId = edgeId - 1;
+    
+                    map.removeFeatureState({
+                        id: edgeId,
+                        source: "bicycle-counts",
+                        sourceLayer: "bikedata"
+                    }, 'route');
+                }
+
+                var settled = {};
+                var queue = [];
+                queue.push(state.directedId);
+                while (queue.length > 0) {
+                    var newQueue = [];
+
+                    // process the current queue
+                    // build the next queue
+                    queue.forEach(q => {
+                        // settle
+                        if (settled[q]) return;
+                        settled[q] = true;
+
+                        // convert to edge id.
+                        var edgeId = q;
+                        if (edgeId < 0) {
+                            edgeId = -edgeId;
+                        }
+                        edgeId = edgeId - 1;
+
+                        // set route state, making the edge visible
+                        map.setFeatureState({
+                            source: 'bicycle-counts',
+                            sourceLayer: "bikedata",
+                            id: edgeId
+                        },{
+                            route: true
+                        });
+
+                        // move to the next edges
+                        var next = destinationTree[q];
+                        if (next == null) return;
+                        if (next.edges == null) return;
+                        next.edges.forEach(e => {
+                            newQueue.push(e);
+                        });                        
+                    });
+
+                    // move to next queue
+                    queue = newQueue;
+                }
+            }
         }
     });
 
