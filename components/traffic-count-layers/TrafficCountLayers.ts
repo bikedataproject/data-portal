@@ -207,9 +207,10 @@ export class TrafficCountLayers {
         this.active = false;
     }
 
-    hookLayerControl(layerControl: LayerControl) {
+    hookLayerControl(layerControl: LayerControl, visible?: boolean) {
+        if (visible == undefined) visible = true;
         var layerConfig: LayerConfig = {
-            name: 'Bicycle Counts',
+            name: 'Bicycle Counts (Preview)',
             layers: [
                 `${this.layerPrefix}_counts`,
                 `${this.layerPrefix}_counts-hover`,
@@ -217,7 +218,7 @@ export class TrafficCountLayers {
                 `${this.layerPrefix}_counts-destinations`,
                 `${this.layerPrefix}_counts-routes`
             ],
-            visible: true
+            visible: visible
         };
 
         layerControl.addLayer(layerConfig);

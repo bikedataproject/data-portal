@@ -55,6 +55,12 @@ export class LayerControl implements IControl {
         // update layers
         this._buildLayers();
 
+        if (layerConfig.visible) {
+            this.show(layerConfig);
+        } else {
+            this.hide(layerConfig);
+        }
+
         return id;
     }
 
@@ -105,7 +111,7 @@ export class LayerControl implements IControl {
     private _buildLayers() {
         this.navElement.innerHTML = "";
 
-        for (var i = 0; i < this.layers.length; i++){
+        for (var i: number = 0; i < this.layers.length; i++){
             var layerConfig = this.layers[i];
 
             var layerButton = document.createElement("a");
@@ -116,17 +122,23 @@ export class LayerControl implements IControl {
             if (layerConfig.visible) {
                 layerButton.classList.add("active");
             }
-            layerButton.addEventListener("click", e => {
-                if (layerConfig.visible) {
-                    this.hide(layerConfig);
-                    layerButton.classList.remove("active");
-                } else {
-                    this.show(layerConfig);
-                    layerButton.classList.add("active");
+            var handleClick = (l, button) => {
+                return e => {
+                    var c = this.layers[l];
+                    console.log(i);
+                    console.log(l);
+                    if (c.visible) {
+                        this.hide(c);
+                        button.classList.remove("active");
+                    } else {
+                        this.show(c);
+                        button.classList.add("active");
+                    }
                 }
-            });
+            };
+            layerButton.addEventListener("click", handleClick(i, layerButton));
 
             this.navElement.appendChild(layerButton);
-        });
+        }
     }
 }
