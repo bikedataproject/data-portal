@@ -80,6 +80,26 @@ export class TrafficCountLayers {
         }, lowestSymbol);
 
         map.addLayer({
+            'id': `${this.layerPrefix}_counts-selected`,
+            'type': 'line',
+            'source': `${this.layerPrefix}_counts`,
+            'source-layer': 'bikedata',
+            'layout': {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            'paint': {
+                'line-color': '#ffd700',
+                'line-width': [
+                    'case',
+                    ['boolean', ['feature-state', 'selected'], false],
+                    5,
+                    0
+                ]                
+            }
+        }, lowestSymbol);
+
+        map.addLayer({
             'id': `${this.layerPrefix}_counts-hover`,
             'type': 'line',
             'source': `${this.layerPrefix}_counts`,
@@ -97,7 +117,7 @@ export class TrafficCountLayers {
                     0
                 ]
             }
-        }, lowestSymbol);
+        }, `${this.layerPrefix}_counts-selected`);
 
         map.addLayer({
             'id': `${this.layerPrefix}_counts-origins`,
@@ -218,6 +238,7 @@ export class TrafficCountLayers {
             name: 'Bicycle Counts (Preview)',
             layers: [
                 `${this.layerPrefix}_counts`,
+                `${this.layerPrefix}_counts-selected`,                
                 `${this.layerPrefix}_counts-hover`,
                 `${this.layerPrefix}_counts-origins`,
                 `${this.layerPrefix}_counts-destinations`,
@@ -243,17 +264,18 @@ export class TrafficCountLayers {
     }
 
     private _reset(): void {
-        console.log("resetting");
         // there no features are selected, reset state.
         this.map.setLayoutProperty(`${this.layerPrefix}_counts`, 'visibility', 'visible');
-        this.map.removeFeatureState({
-            source: `${this.layerPrefix}_counts`,
-            sourceLayer: "bikedata"
-        });
     }
 
     private _onMapClick(e: MapMouseEvent & EventData) {
         if (!this.active) return;
+
+        // reset feature states.
+        this.map.removeFeatureState({
+            source: `${this.layerPrefix}_counts`,
+            sourceLayer: "bikedata"
+        });
 
         // get features aroud the clicked point.
         var bbox: [PointLike, PointLike] = [
@@ -265,16 +287,39 @@ export class TrafficCountLayers {
         });
 
         if (features.length == 0) {
+            features = this.map.queryRenderedFeatures(bbox, {
+                layers: [`${this.layerPrefix}_counts-origins`]
+            });
+        }
+
+        if (features.length == 0) {
+            features = this.map.queryRenderedFeatures(bbox, {
+                layers: [`${this.layerPrefix}_counts-destinations`]
+            });
+        }
+
+        if (features.length == 0) {
             this._reset();
             return;
         }
 
-        var feature = features[0];
+        var feature = features[0];                
+        
+        var selectedDirectedId = DirectedEdgeId.ToDirectedEdgeId(feature.properties.id, true);
+
+        console.log(selectedDirectedId);
+        this.map.setFeatureState({
+            id: selectedDirectedId.EdgeId(),
+            source: `${this.layerPrefix}_counts`,
+            sourceLayer: "bikedata"
+        }, {
+            selected: true
+        });
 
         this.map.setLayoutProperty(`${this.layerPrefix}_counts`, 'visibility', 'none');
 
         // get tree forward
-        this.api.getTree(DirectedEdgeId.ToDirectedEdgeId(feature.properties.id, true), tree => {
+        this.api.getTree(selectedDirectedId, tree => {
             for (var o in tree.originTree) {
                 var origin = tree.originTree[o];
                 var originDirectedId = new DirectedEdgeId(Number(o));
