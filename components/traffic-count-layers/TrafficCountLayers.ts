@@ -283,7 +283,7 @@ export class TrafficCountLayers {
             [e.point.x + 5, e.point.y + 5]
         ];
         var features = this.map.queryRenderedFeatures(bbox, {
-            layers: [`${this.layerPrefix}_counts`]
+            layers: [`${this.layerPrefix}_counts-selected`]
         });
 
         if (features.length == 0) {
@@ -299,6 +299,12 @@ export class TrafficCountLayers {
         }
 
         if (features.length == 0) {
+            features = this.map.queryRenderedFeatures(bbox, {
+                layers: [`${this.layerPrefix}_counts`]
+            }); 
+        }
+
+        if (features.length == 0) {
             this._reset();
             return;
         }
@@ -306,6 +312,14 @@ export class TrafficCountLayers {
         var feature = features[0];                
         
         var selectedDirectedId = DirectedEdgeId.ToDirectedEdgeId(feature.properties.id, true);
+
+        if (this.selectedTree) {
+            var selectedTreeDirectedId = new DirectedEdgeId(this.selectedTree.directedEdgeId);
+            if (selectedDirectedId.EdgeId() == selectedTreeDirectedId.EdgeId()) {
+                console.log("inverting!");
+                selectedDirectedId = selectedTreeDirectedId.Invert();
+            }
+        }
 
         console.log(selectedDirectedId);
         this.map.setFeatureState({
@@ -320,6 +334,8 @@ export class TrafficCountLayers {
 
         // get tree forward
         this.api.getTree(selectedDirectedId, tree => {
+            console.log(tree);
+
             for (var o in tree.originTree) {
                 var origin = tree.originTree[o];
                 var originDirectedId = new DirectedEdgeId(Number(o));

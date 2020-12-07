@@ -21,6 +21,10 @@ export class DirectedEdgeId {
         }
     }
 
+    Invert(): DirectedEdgeId {
+        return new DirectedEdgeId(-this.directedEdgeId);
+    }
+
     static ToDirectedEdgeId(edgeId: number, forward: boolean): DirectedEdgeId {
         if (forward) {
             return new DirectedEdgeId(edgeId + 1);

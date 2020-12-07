@@ -19,12 +19,13 @@ export class TrafficCountsApi {
     getTree(directedEdgeId: DirectedEdgeId, callback: (tree: TrafficCountTree) => void) {
         $.get(this.url + '/trees/' + directedEdgeId.Id(), (data) => {
             var count = Number(data.count);
+            var directedEdgeId = Number(data.id);
 
             // parse origin tree.
             var originTree: { [key: number]: TreeEdge; } = {};
             if (data.origins) {
                 for (const c in data.origins) {
-                    var directedEdgeId = Number(c);
+                    var e = Number(c);
                     var origin = data.origins[c];
 
                     var count = Number(origin.count);
@@ -36,7 +37,7 @@ export class TrafficCountsApi {
                         });
                     }
                     
-                    originTree[directedEdgeId] = {
+                    originTree[e] = {
                         count: count,
                         edges: edges
                     };
@@ -47,7 +48,7 @@ export class TrafficCountsApi {
             var destinationTree: { [key: number]: TreeEdge; } = {};
             if (data.destinations) {
                 for (const c in data.destinations) {
-                    var directedEdgeId = Number(c);
+                    var e = Number(c);
                     var destination = data.destinations[c];
 
                     var count = Number(destination.count);
@@ -59,7 +60,7 @@ export class TrafficCountsApi {
                         });
                     }
                     
-                    destinationTree[directedEdgeId] = {
+                    destinationTree[e] = {
                         count: count,
                         edges: edges
                     };
