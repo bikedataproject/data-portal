@@ -154,17 +154,50 @@ export class TrafficCountLayers {
         map.on("click", e => {
             this._onMapClick(e);
         });
-        map.on('mousemove', `${this.layerPrefix}_counts-origins`, e => {
-            this._onMouseMoveOrigins(e);
-        });
-        map.on('mousemove', `${this.layerPrefix}_counts-destinations`, e => {
-            this._onMouseMoveDestinations(e);
+        map.on('mousemove', e => {
+            // get features aroud the hovered point.
+            var bbox: [PointLike, PointLike] = [
+                [e.point.x - 5, e.point.y - 5],
+                [e.point.x + 5, e.point.y + 5]
+            ];
+
+            // check origins layer.
+            var features = this.map.queryRenderedFeatures(bbox, {
+                layers: [`${this.layerPrefix}_counts-origins`]
+            });
+            if (features.length > 0) {
+                for (var i = 0; i < features.length; i++) {
+                    var f = features[i];
+                    var state = this.map.getFeatureState(f);
+                    if (state && state.origin) {
+                        e.features = [ f ];
+                        this._onMouseMoveOrigins(e);
+                        return;
+                    }
+                }
+            }
+
+            // check destinations layer.
+            var features = this.map.queryRenderedFeatures(bbox, {
+                layers: [`${this.layerPrefix}_counts-destinations`]
+            });   
+            if (features.length > 0) {
+                for (var i = 0; i < features.length; i++) {
+                    var f = features[i];
+                    var state = this.map.getFeatureState(f);
+                    if (state && state.destination) {
+                        e.features = [ f ];
+                        this._onMouseMoveDestinations(e);
+                        return;
+                    }
+                }
+            }
         });
     }
 
     private _onMapClick(e: MapMouseEvent & EventData) {
 
-        // get features aroudnc clicked point.
+        // get features aroud the clicked point.
         var bbox: [PointLike, PointLike] = [
             [e.point.x - 5, e.point.y - 5],
             [e.point.x + 5, e.point.y + 5]
