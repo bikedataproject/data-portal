@@ -184,6 +184,8 @@ export class TrafficCountLayers {
             this._onMapClick(e);
         });
         map.on('mousemove', e => {
+            if (!this.active) return;
+
             // get features aroud the hovered point.
             var bbox: [PointLike, PointLike] = [
                 [e.point.x - 5, e.point.y - 5],
@@ -246,6 +248,12 @@ export class TrafficCountLayers {
             ],
             visible: visible
         };
+
+        if (visible) {
+            this.activate();
+        } else {
+            this.disactivate();
+        }
 
         layerControl.addLayer(layerConfig);
 
