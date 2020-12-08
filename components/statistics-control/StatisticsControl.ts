@@ -2,15 +2,19 @@ import { IControl, Map, MapDataEvent, MapSourceDataEvent, MapStyleDataEvent } fr
 import './*.css';
 import { EventsHub } from "../../libs/events/EventsHub";
 import { allStatistics } from "./Data";
+import { LayerControl } from "../layer-control/LayerControl";
+import { LayerConfig } from "../layer-control/LayerConfig";
 
 export class StatisticsControl implements IControl {
-    map: Map;
-    element: HTMLElement;
-    navElement: HTMLElement;
+    private map: Map;
+    private element: HTMLElement;
+    private navElement: HTMLElement;
 
-    selectedFeature: any;
-    lastLocation: any;
-    beforeLayer?: string
+    private selectedFeature: any;
+    private lastLocation: any;
+    private beforeLayer?: string
+
+    private active: boolean = true;
 
     constructor(beforeLayer?: string) {
         this.beforeLayer = beforeLayer;
@@ -46,6 +50,48 @@ export class StatisticsControl implements IControl {
 
     }
 
+    activate(): void {
+        this.active = true;
+    }
+
+    disactivate(): void {
+        this.active = false;
+    }
+
+    hookLayerControl(layerControl: LayerControl, visible?: boolean) {
+        if (visible == undefined) visible = true;
+        var layerConfig: LayerConfig = {
+            name: 'Statistics',
+            layers: [
+                `areas-stats`,
+                `areas-stats-selected`,                
+                `areas-stats-boundaries`
+            ],
+            visible: visible
+        };
+
+        if (visible) {
+            this.activate();
+        } else {
+            this.disactivate();
+        }
+
+        layerControl.addLayer(layerConfig);
+
+        var me = this;
+        layerControl.on('show', c => {
+            if (c.name != layerConfig.name) return;
+
+            me._onMouseLeave();
+            me.active = true;
+        });
+        layerControl.on('hide', c => {
+            if (c.name != layerConfig.name) return;
+
+            me.active = false;
+        });
+    }
+
     private _onMapStyleLoaded(): void {
         var existing = this.map.getLayer('areas-stats');
         if (existing) return;
@@ -55,6 +101,8 @@ export class StatisticsControl implements IControl {
     }
 
     private _onMouseLeave(): void {
+        if (!this.active) return;
+
         this.map.getCanvas().style.cursor = '';
         this.map.setFilter('areas-stats-selected', ['in', 'id', '']);
         this.navElement.style.display = 'none';
@@ -62,6 +110,8 @@ export class StatisticsControl implements IControl {
     }
 
     private _onZoomEnd(): void {
+        if (!this.active) return;
+
         if (this.lastLocation) {
             var statsArea = this.map.queryRenderedFeatures(this.lastLocation, {
                 layers: ["areas-stats"]
@@ -156,6 +206,8 @@ export class StatisticsControl implements IControl {
 
         var me = this;
         this.map.on("data", e => {    
+            if (!this.active) return;
+
             var mapSourceDataEvent = e as MapSourceDataEvent;
             if (mapSourceDataEvent.isSourceLoaded) {   
                 me._onMapData(mapSourceDataEvent); 
@@ -163,9 +215,13 @@ export class StatisticsControl implements IControl {
         });
 
         this.map.on('mouseleave', 'areas-stats', _ => {
+            if (!this.active) return;
+
             this._onMouseLeave();
         });
         this.map.on('mousemove', 'areas-stats', e => {
+            if (!this.active) return;
+
             this.map.getCanvas().style.cursor = 'pointer';
 
             this.lastLocation = e.point;
@@ -182,6 +238,8 @@ export class StatisticsControl implements IControl {
     }
 
     private _updateOverlay(): void {
+        if (!this.active) return;
+
         this.navElement.innerHTML = '';
 
         const feature = this.selectedFeature;

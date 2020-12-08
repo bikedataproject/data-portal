@@ -77,12 +77,6 @@ map.on('data', customizeStyle);
 
 map.on('load', function () {
 
-    // add bicycle count layers.
-    trafficCountLayers.addToMap(map);
-
-    // hook up layer control.
-    trafficCountLayers.hookLayerControl(layerControl, false);
-
     // get lowest label and road.
     var style = map.getStyle();
     console.log(style);
@@ -199,5 +193,13 @@ map.on('load', function () {
         }
     }, lowestRoad);
 
-    map.addControl(new StatisticsControl('heatmap-heat-lower'), 'bottom-left');
+    var statisticsControl = new StatisticsControl('heatmap-heat-lower');
+    map.addControl(statisticsControl, 'bottom-left');
+    statisticsControl.hookLayerControl(layerControl);
+
+    // add bicycle count layers.
+    trafficCountLayers.addToMap(map);
+
+    // hook up layer control.
+    trafficCountLayers.hookLayerControl(layerControl, false);
 });

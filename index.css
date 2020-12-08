@@ -3,14 +3,11 @@ body {
     padding: 0;
     height: 100%;
     font-family: "Muli", Helvetica, Arial;
-    font-size: 1.6rem;
-    line-height: 1.7;
     background-color: white;
 }
 
 html {
     box-sizing: border-box;
-    font-size: 62.5%;
     height: 100%;
 }
 
