@@ -326,12 +326,10 @@ export class TrafficCountLayers {
         if (this.selectedTree) {
             var selectedTreeDirectedId = new DirectedEdgeId(this.selectedTree.directedEdgeId);
             if (selectedDirectedId.EdgeId() == selectedTreeDirectedId.EdgeId()) {
-                console.log("inverting!");
                 selectedDirectedId = selectedTreeDirectedId.Invert();
             }
         }
 
-        console.log(selectedDirectedId);
         this.map.setFeatureState({
             id: selectedDirectedId.EdgeId(),
             source: `${this.layerPrefix}_counts`,
@@ -344,8 +342,6 @@ export class TrafficCountLayers {
 
         // get tree forward
         this.api.getTree(selectedDirectedId, tree => {
-            console.log(tree);
-
             for (var o in tree.originTree) {
                 var origin = tree.originTree[o];
                 var originDirectedId = new DirectedEdgeId(Number(o));
