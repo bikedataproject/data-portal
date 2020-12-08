@@ -55,6 +55,8 @@ export class TrafficCountLayers {
             }
         }
 
+        var behindLayer = lowestSymbol;
+
         map.addSource(`${this.layerPrefix}_counts`, {
             type: 'vector',
             url: this.api.mvtUrl(),
@@ -77,7 +79,7 @@ export class TrafficCountLayers {
                     14, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 5], 0.1], 5]
                 ]
             }
-        }, lowestSymbol);
+        }, behindLayer);
 
         map.addLayer({
             'id': `${this.layerPrefix}_counts-selected`,
@@ -97,7 +99,7 @@ export class TrafficCountLayers {
                     0
                 ]                
             }
-        }, lowestSymbol);
+        }, behindLayer);
 
         map.addLayer({
             'id': `${this.layerPrefix}_counts-hover`,
@@ -177,7 +179,7 @@ export class TrafficCountLayers {
                     0
                 ]
             }
-        }, lowestSymbol);
+        }, behindLayer);
 
         // hook up map events
         map.on("click", e => {
