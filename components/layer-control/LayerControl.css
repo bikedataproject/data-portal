@@ -2,37 +2,38 @@
     background: rgba(255, 255, 255, 0);
     position: absolute;
     z-index: 1;
-    border-radius: 3px;
     width: 120px;
 }
 
 .layers a {
-    font-size: 13px;
-    color: #404040;
-    background: rgba(255, 255, 255, 1);
+    font-size: 14px;
+    font-weight: 600;
+    background: white;
+    border-radius: 1rem;
     display: block;
     margin: 0;
-    padding: 0;
     padding: 10px;
     text-decoration: none;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
     text-align: center;
-}
-
-.layers a:last-child {
-    border: none;
+    margin-bottom: 10px;
+    border: .1rem solid #36469d;
+    transition: .2s ease-in-out;
+    color: #36469d;
 }
 
 .layers a:hover {
-    background-color: #f8f8f8;
-    color: #404040;
+    background-color: #36469d;
+    color: #fff;
+    border: none;
 }
 
 .layers a.active {
-    background-color: #3887be;
-    color: #ffffff;
+    background-color: #ef4823;
+    color: #fff;
+    border: none;
 }
 
 .layers a.active:hover {
-    background: #3074a4;
+    background: #36469d;
+    border: none;
 }

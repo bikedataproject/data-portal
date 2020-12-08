@@ -104,7 +104,15 @@ export class StatisticsControl implements IControl {
         if (!this.active) return;
 
         this.map.getCanvas().style.cursor = '';
-        this.map.setFilter('areas-stats-selected', ['in', 'id', '']);
+
+        if (this.selectedFeature) {
+            this.map.removeFeatureState({
+                source: "areas",
+                sourceLayer: "areas",
+                id: this.selectedFeature.properties.id
+            }, 'selected');
+        }
+
         this.navElement.style.display = 'none';
         this.lastLocation = undefined;
     }
@@ -118,14 +126,23 @@ export class StatisticsControl implements IControl {
             });
 
             if (statsArea && statsArea.length > 0) {
+
+                if (this.selectedFeature) {
+                    this.map.removeFeatureState({
+                        source: "areas",
+                        sourceLayer: "areas",
+                        id: this.selectedFeature.properties.id
+                    }, 'selected');
+                }
+
                 this.selectedFeature = statsArea[0];
                 this._updateOverlay();
 
-                this.map.setFilter('areas-stats-selected', [
-                    'in',
-                    'id',
-                    statsArea[0].properties.id,
-                ]);
+
+            this.map.setFeatureState(this.selectedFeature,
+                {
+                    selected: true
+                });
             }
         }
     }
@@ -199,9 +216,13 @@ export class StatisticsControl implements IControl {
                 'source-layer': 'areas',
                 paint: {
                     'fill-color': 'rgba(103,169,207,0.3)',
-                    'fill-opacity': 0.75,
-                },
-                filter: ['in', 'id', ''],
+                    'fill-opacity': [ 
+                        'case',
+                        ['boolean', ['feature-state', 'selected'], false],
+                        0.75,
+                        0
+                    ]
+                }
             }, this.beforeLayer);
 
         var me = this;
@@ -226,14 +247,26 @@ export class StatisticsControl implements IControl {
 
             this.lastLocation = e.point;
 
+            if (this.selectedFeature) {
+                this.map.removeFeatureState({
+                    source: "areas",
+                    sourceLayer: "areas",
+                    id: this.selectedFeature.properties.id
+                }, 'selected');
+            }
+
             this.selectedFeature = e.features[0];    
             this._updateOverlay();
+            this.map.setFeatureState(this.selectedFeature,
+                {
+                    selected: true
+                });
     
-            this.map.setFilter('areas-stats-selected', [
-                'in',
-                'id',
-                this.selectedFeature.properties.id,
-            ]);
+            // this.map.setFilter('areas-stats-selected', [
+            //     'in',
+            //     'id',
+            //     this.selectedFeature.properties.id,
+            // ]);
         });
     }
 
