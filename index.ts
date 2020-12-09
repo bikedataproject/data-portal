@@ -16,8 +16,8 @@ var map = new mapboxgl.Map({
     //style: 'https://api.maptiler.com/maps/3327a63f-c15d-462a-9f23-ebf73a14254a/style.json?key=2Piy1GKXoXq0rHzzBVDA',
     style: 'https://api.maptiler.com/maps/7e7e2443-1c41-46d0-813c-f6b11c2c0225/style.json?key=2Piy1GKXoXq0rHzzBVDA',
     // style: 'https://api.maptiler.com/maps/basic/style.json?key=2Piy1GKXoXq0rHzzBVDA', // default maptiler.
-    center: [4.3525, 50.8454],
-    zoom: 14,
+    center: [4.3638, 50.8345],
+    zoom: 11.5,
     hash: true,
     maxZoom: 17
 });
