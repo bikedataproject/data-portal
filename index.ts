@@ -176,7 +176,7 @@ map.on('load', function () {
 
     // add traffic counts layers.
     var trafficCountLayers = new TrafficCountLayers(trafficCountsApi, {
-        hover: false
+        hover: true
     });
     map.addControl(trafficCountLayers, 'bottom-left');
 

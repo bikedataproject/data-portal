@@ -67,7 +67,7 @@ export class TrafficCountLayers implements IControl {
         this._buildLayers();
     }
 
-    private _updateOverlay(): void {
+    private _updateOverlay(hoverDetails: any): void {
         if (!this.active) return;
 
         this.navElement.innerHTML = '';
@@ -88,17 +88,35 @@ export class TrafficCountLayers implements IControl {
         const dataWrapper = document.createElement('section');
         dataWrapper.classList.add('data__wrapper');
 
-        const forwardCount = feature.properties["forward_count"];
-        const backwardCount = feature.properties["backward_count"];
-        const count = forwardCount + backwardCount;
+        if (hoverDetails) {            
+            const count = hoverDetails.count;
 
-        if (!count) {
-            dataWrapper.innerHTML = `
+            if (!count) {
+                dataWrapper.innerHTML = `
                     <div class="data__empty">
                       <p>No data collected yet. Get cycling & share your data 🚴</p>
                     </div>`;
+            } else {
+                dataWrapper.innerHTML = `
+                     <div class="data__set">
+                       <span class="data__number">${count}</span>
+                       <p class="data__label">Local Count</p>
+                     </div>
+                    `;
+            }
         } else {
-            dataWrapper.innerHTML = `
+
+            const forwardCount = feature.properties["forward_count"];
+            const backwardCount = feature.properties["backward_count"];
+            const count = forwardCount + backwardCount;
+
+            if (!count) {
+                dataWrapper.innerHTML = `
+                    <div class="data__empty">
+                      <p>No data collected yet. Get cycling & share your data 🚴</p>
+                    </div>`;
+            } else {
+                dataWrapper.innerHTML = `
                      <div class="data__set">
                        <span class="data__number">${count}</span>
                        <p class="data__label">Total Bicycles</p>
@@ -112,6 +130,7 @@ export class TrafficCountLayers implements IControl {
                        <p class="data__label">Backward Count</p>
                      </div>
                     `;
+            }
         }
 
         this.navElement.appendChild(container);
@@ -437,7 +456,7 @@ export class TrafficCountLayers implements IControl {
 
         // get tree forward
         this.api.getTree(selectedDirectedId, tree => {
-            this._updateOverlay();
+            this._updateOverlay(undefined);
             for (var o in tree.originTree) {
                 var origin = tree.originTree[o];
                 var originDirectedId = new DirectedEdgeId(Number(o));
@@ -495,75 +514,86 @@ export class TrafficCountLayers implements IControl {
                 },
                 { hover: true }
             );
+            this.selectedFeature = e.features[0];
 
-            var state = this.map.getFeatureState({
-                source: `${this.layerPrefix}_counts`,
-                sourceLayer: "bikedata",
-                id: this.hoveredId
-            });
-
-            // do routes layer
-            if (this.selectedTree.originTree != null) {
-                for (const c in this.selectedTree.originTree) {
-                    var edgeId = new DirectedEdgeId(Number(c));
-
-                    this.map.removeFeatureState({
-                        id: edgeId.EdgeId(),
-                        source: `${this.layerPrefix}_counts`,
-                        sourceLayer: "bikedata"
-                    }, 'route');
+            if (this.selectedTree.originTree) {
+                var directedEdgeId = new DirectedEdgeId(this.selectedFeature.properties.id);
+                var hoverDetails = this.selectedTree.originTree[directedEdgeId.Id()];
+                if (!hoverDetails) {
+                    directedEdgeId = directedEdgeId.Invert();
+                    hoverDetails = this.selectedTree.originTree[directedEdgeId.Id()];
                 }
-
-                if (this.selectedTree.destinationTree != null) {
-                    for (const c in this.selectedTree.destinationTree) {
-                        var edgeId = new DirectedEdgeId(Number(c));
-
-                        this.map.removeFeatureState({
-                            id: edgeId.EdgeId(),
-                            source: `${this.layerPrefix}_counts`,
-                            sourceLayer: "bikedata"
-                        }, 'route');
-                    }
-                }
-
-                var settled = {};
-                var queue: number[] = [];
-                queue.push(Number(state["origin_id"]));
-                while (queue.length > 0) {
-                    var newQueue = [];
-
-                    // process the current queue
-                    // build the next queue
-                    queue.forEach(q => {
-                        // settle
-                        if (settled[q]) return;
-                        settled[q] = true;
-
-                        // convert to edge id.
-                        var edgeId = new DirectedEdgeId(q);
-
-                        // set route state, making the edge visible
-                        this.map.setFeatureState({
-                            source: `${this.layerPrefix}_counts`,
-                            sourceLayer: "bikedata",
-                            id: edgeId.EdgeId()
-                        }, {
-                            route: true
-                        });
-
-                        // move to the next edges
-                        var next = this.selectedTree.originTree[q];
-                        if (next == null) return;
-                        if (next.edges == null) return;
-                        next.edges.forEach(e => {
-                            newQueue.push(e);
-                        });
-                    });
-
-                    // move to next queue
-                    queue = newQueue;
-                }
+                if (hoverDetails) this._updateOverlay(hoverDetails);
             }
+
+            // var state = this.map.getFeatureState({
+            //     source: `${this.layerPrefix}_counts`,
+            //     sourceLayer: "bikedata",
+            //     id: this.hoveredId
+            // });
+
+            // // do routes layer
+            // if (this.selectedTree.originTree != null) {
+            //     for (const c in this.selectedTree.originTree) {
+            //         var edgeId = new DirectedEdgeId(Number(c));
+
+            //         this.map.removeFeatureState({
+            //             id: edgeId.EdgeId(),
+            //             source: `${this.layerPrefix}_counts`,
+            //             sourceLayer: "bikedata"
+            //         }, 'route');
+            //     }
+
+            //     if (this.selectedTree.destinationTree != null) {
+            //         for (const c in this.selectedTree.destinationTree) {
+            //             var edgeId = new DirectedEdgeId(Number(c));
+
+            //             this.map.removeFeatureState({
+            //                 id: edgeId.EdgeId(),
+            //                 source: `${this.layerPrefix}_counts`,
+            //                 sourceLayer: "bikedata"
+            //             }, 'route');
+            //         }
+            //     }
+
+            //     var settled = {};
+            //     var queue: number[] = [];
+            //     queue.push(Number(state["origin_id"]));
+            //     while (queue.length > 0) {
+            //         var newQueue = [];
+
+            //         // process the current queue
+            //         // build the next queue
+            //         queue.forEach(q => {
+            //             // settle
+            //             if (settled[q]) return;
+            //             settled[q] = true;
+
+            //             // convert to edge id.
+            //             var edgeId = new DirectedEdgeId(q);
+
+            //             // set route state, making the edge visible
+            //             this.map.setFeatureState({
+            //                 source: `${this.layerPrefix}_counts`,
+            //                 sourceLayer: "bikedata",
+            //                 id: edgeId.EdgeId()
+            //             }, {
+            //                 route: true
+            //             });
+
+            //             // move to the next edges
+            //             var next = this.selectedTree.originTree[q];
+            //             if (next == null) return;
+            //             if (next.edges == null) return;
+            //             next.edges.forEach(e => {
+            //                 newQueue.push(e);
+            //             });
+            //         });
+
+            //         // move to next queue
+            //         queue = newQueue;
+            //     }
+            // }
         }
     }
 
@@ -590,75 +620,86 @@ export class TrafficCountLayers implements IControl {
                 },
                 { hover: true }
             );
+            this.selectedFeature = e.features[0];
 
-            var state = this.map.getFeatureState({
-                source: `${this.layerPrefix}_counts`,
-                sourceLayer: "bikedata",
-                id: this.hoveredId
-            });
-
-            // do routes layer
-            if (this.selectedTree.destinationTree != null) {
-                for (const c in this.selectedTree.destinationTree) {
-                    var edgeId = new DirectedEdgeId(Number(c));
-
-                    this.map.removeFeatureState({
-                        id: edgeId.EdgeId(),
-                        source: `${this.layerPrefix}_counts`,
-                        sourceLayer: "bikedata"
-                    }, 'route');
+            if (this.selectedTree.destinationTree) {
+                var directedEdgeId = new DirectedEdgeId(this.selectedFeature.properties.id);
+                var hoverDetails = this.selectedTree.destinationTree[directedEdgeId.Id()];
+                if (!hoverDetails) {
+                    directedEdgeId = directedEdgeId.Invert();
+                    hoverDetails = this.selectedTree.destinationTree[directedEdgeId.Id()];
                 }
-
-                if (this.selectedTree.originTree != null) {
-                    for (const c in this.selectedTree.originTree) {
-                        var edgeId = new DirectedEdgeId(Number(c));
-
-                        this.map.removeFeatureState({
-                            id: edgeId.EdgeId(),
-                            source: `${this.layerPrefix}_counts`,
-                            sourceLayer: "bikedata"
-                        }, 'route');
-                    }
-                }
-
-                var settled = {};
-                var queue: number[] = [];
-                queue.push(Number(state["destination_id"]));
-                while (queue.length > 0) {
-                    var newQueue = [];
-
-                    // process the current queue
-                    // build the next queue
-                    queue.forEach(q => {
-                        // settle
-                        if (settled[q]) return;
-                        settled[q] = true;
-
-                        // convert to edge id.
-                        var edgeId = new DirectedEdgeId(q);
-
-                        // set route state, making the edge visible
-                        this.map.setFeatureState({
-                            source: `${this.layerPrefix}_counts`,
-                            sourceLayer: "bikedata",
-                            id: edgeId.EdgeId()
-                        }, {
-                            route: true
-                        });
-
-                        // move to the next edges
-                        var next = this.selectedTree.destinationTree[q];
-                        if (next == null) return;
-                        if (next.edges == null) return;
-                        next.edges.forEach(e => {
-                            newQueue.push(e);
-                        });
-                    });
-
-                    // move to next queue
-                    queue = newQueue;
-                }
+                if (hoverDetails) this._updateOverlay(hoverDetails);
             }
+
+            // var state = this.map.getFeatureState({
+            //     source: `${this.layerPrefix}_counts`,
+            //     sourceLayer: "bikedata",
+            //     id: this.hoveredId
+            // });
+
+            // // do routes layer
+            // if (this.selectedTree.destinationTree != null) {
+            //     for (const c in this.selectedTree.destinationTree) {
+            //         var edgeId = new DirectedEdgeId(Number(c));
+
+            //         this.map.removeFeatureState({
+            //             id: edgeId.EdgeId(),
+            //             source: `${this.layerPrefix}_counts`,
+            //             sourceLayer: "bikedata"
+            //         }, 'route');
+            //     }
+
+            //     if (this.selectedTree.originTree != null) {
+            //         for (const c in this.selectedTree.originTree) {
+            //             var edgeId = new DirectedEdgeId(Number(c));
+
+            //             this.map.removeFeatureState({
+            //                 id: edgeId.EdgeId(),
+            //                 source: `${this.layerPrefix}_counts`,
+            //                 sourceLayer: "bikedata"
+            //             }, 'route');
+            //         }
+            //     }
+
+            //     var settled = {};
+            //     var queue: number[] = [];
+            //     queue.push(Number(state["destination_id"]));
+            //     while (queue.length > 0) {
+            //         var newQueue = [];
+
+            //         // process the current queue
+            //         // build the next queue
+            //         queue.forEach(q => {
+            //             // settle
+            //             if (settled[q]) return;
+            //             settled[q] = true;
+
+            //             // convert to edge id.
+            //             var edgeId = new DirectedEdgeId(q);
+
+            //             // set route state, making the edge visible
+            //             this.map.setFeatureState({
+            //                 source: `${this.layerPrefix}_counts`,
+            //                 sourceLayer: "bikedata",
+            //                 id: edgeId.EdgeId()
+            //             }, {
+            //                 route: true
+            //             });
+
+            //             // move to the next edges
+            //             var next = this.selectedTree.destinationTree[q];
+            //             if (next == null) return;
+            //             if (next.edges == null) return;
+            //             next.edges.forEach(e => {
+            //                 newQueue.push(e);
+            //             });
+            //         });
+
+            //         // move to next queue
+            //         queue = newQueue;
+            //     }
+            // }
         }
     }
 }
