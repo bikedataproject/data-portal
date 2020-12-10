@@ -1,11 +1,12 @@
 import { TrafficCountsApi } from "../../apis/traffic-counts-api/TrafficCountsApi";
-import { Map, MapMouseEvent, EventData, Marker, PointLike } from 'mapbox-gl';
+import { Map, MapMouseEvent, EventData, Marker, PointLike, IControl, MapStyleDataEvent, MapboxGeoJSONFeature } from 'mapbox-gl';
 import { DirectedEdgeId } from "../../apis/traffic-counts-api/DirectedEdgeId";
 import { TrafficCountTree } from "../../apis/traffic-counts-api/TrafficCountTree";
 import { LayerControl } from "../layer-control/LayerControl";
 import { LayerConfig } from "../layer-control/LayerConfig";
+import './*.css';
 
-export class TrafficCountLayers {
+export class TrafficCountLayers implements IControl {
     private readonly api: TrafficCountsApi;
     private readonly layerPrefix: string;
 
@@ -13,6 +14,9 @@ export class TrafficCountLayers {
     private hoveredId: number;
     private selectedTree: TrafficCountTree;
     private hover: boolean = true;
+    private element: HTMLDivElement;
+    private navElement: HTMLElement;
+    private selectedFeature: MapboxGeoJSONFeature;
 
     active: boolean = true;
 
@@ -25,11 +29,101 @@ export class TrafficCountLayers {
         }
     }
 
-    addToMap(map: Map) {
+    onAdd(map: mapboxgl.Map): HTMLElement {
         this.map = map;
 
+        // create element.
+        this.element = document.createElement("div");
+        this.element.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
+
+        this.navElement = document.createElement("nav");
+        this.navElement.classList.add("counts-map-overlay");
+        this.element.appendChild(this.navElement);
+
+        // hook up events.
+        var me = this;
+        this.map.on("data", e => {
+            var mapStyleDataEvent = e as MapStyleDataEvent;
+            if (mapStyleDataEvent.dataType == "style") {
+                me._onMapStyleLoaded();
+            }
+        });
+        this.map.on('zoomend', _ => {
+            //me._onZoomEnd();
+        });
+
+        return this.element;
+    }
+
+    onRemove(map: mapboxgl.Map) {
+
+    }
+
+    private _onMapStyleLoaded(): void {
+        var existing = this.map.getLayer(`${this.layerPrefix}_counts`);
+        if (existing) return;
+
+        // build initial layers
+        this._buildLayers();
+    }
+
+    private _updateOverlay(): void {
+        if (!this.active) return;
+
+        this.navElement.innerHTML = '';
+
+        const feature = this.selectedFeature;
+        const container = document.createElement('div');
+        container.classList.add("wrapper");
+
+        const title = document.createElement('h4');
+        title.classList.add('data__subtitle');
+
+        var name = "";
+        if (feature.properties.name) {
+            name = feature.properties.name;
+        }
+        title.textContent = name;
+
+        const dataWrapper = document.createElement('section');
+        dataWrapper.classList.add('data__wrapper');
+
+        const forwardCount = feature.properties["forward_count"];
+        const backwardCount = feature.properties["backward_count"];
+        const count = forwardCount + backwardCount;
+
+        if (!count) {
+            dataWrapper.innerHTML = `
+                    <div class="data__empty">
+                      <p>No data collected yet. Get cycling & share your data 🚴</p>
+                    </div>`;
+        } else {
+            dataWrapper.innerHTML = `
+                     <div class="data__set">
+                       <span class="data__number">${count}</span>
+                       <p class="data__label">Total Bicycles</p>
+                     </div>
+                     <div class="data__set">
+                       <span class="data__number">${forwardCount}</span>
+                       <p class="data__label">Forward Count</p>
+                     </div>
+                     <div class="data__set">
+                       <span class="data__number">${backwardCount}</span>
+                       <p class="data__label">Backward Count</p>
+                     </div>
+                    `;
+        }
+
+        this.navElement.appendChild(container);
+        container.appendChild(title);
+        container.appendChild(dataWrapper);
+        this.navElement.style.display = 'block';
+    }
+
+    private _buildLayers(): void {
+
         // get lowest label and road.
-        var style = map.getStyle();
+        var style = this.map.getStyle();
         var lowestRoad = undefined;
         var lowestLabel = undefined;
         var lowestSymbol = undefined;
@@ -57,13 +151,13 @@ export class TrafficCountLayers {
 
         var behindLayer = lowestSymbol;
 
-        map.addSource(`${this.layerPrefix}_counts`, {
+        this.map.addSource(`${this.layerPrefix}_counts`, {
             type: 'vector',
             url: this.api.mvtUrl(),
             promoteId: { "bikedata": "id" }
         });
 
-        map.addLayer({
+        this.map.addLayer({
             'id': `${this.layerPrefix}_counts`,
             'type': 'line',
             'source': `${this.layerPrefix}_counts`,
@@ -81,7 +175,7 @@ export class TrafficCountLayers {
             }
         }, behindLayer);
 
-        map.addLayer({
+        this.map.addLayer({
             'id': `${this.layerPrefix}_counts-selected`,
             'type': 'line',
             'source': `${this.layerPrefix}_counts`,
@@ -97,11 +191,11 @@ export class TrafficCountLayers {
                     ['boolean', ['feature-state', 'selected'], false],
                     5,
                     0
-                ]                
+                ]
             }
         }, behindLayer);
 
-        map.addLayer({
+        this.map.addLayer({
             'id': `${this.layerPrefix}_counts-hover`,
             'type': 'line',
             'source': `${this.layerPrefix}_counts`,
@@ -121,7 +215,7 @@ export class TrafficCountLayers {
             }
         }, `${this.layerPrefix}_counts-selected`);
 
-        map.addLayer({
+        this.map.addLayer({
             'id': `${this.layerPrefix}_counts-origins`,
             'type': 'line',
             'source': `${this.layerPrefix}_counts`,
@@ -141,7 +235,7 @@ export class TrafficCountLayers {
             }
         }, `${this.layerPrefix}_counts-hover`);
 
-        map.addLayer({
+        this.map.addLayer({
             'id': `${this.layerPrefix}_counts-destinations`,
             'type': 'line',
             'source': `${this.layerPrefix}_counts`,
@@ -161,7 +255,7 @@ export class TrafficCountLayers {
             }
         }, `${this.layerPrefix}_counts-hover`);
 
-        map.addLayer({
+        this.map.addLayer({
             'id': `${this.layerPrefix}_counts-routes`,
             'type': 'line',
             'source': `${this.layerPrefix}_counts`,
@@ -182,10 +276,10 @@ export class TrafficCountLayers {
         }, behindLayer);
 
         // hook up map events
-        map.on("click", e => {
+        this.map.on("click", e => {
             this._onMapClick(e);
         });
-        map.on('mousemove', e => {
+        this.map.on('mousemove', e => {
             if (!this.active) return;
 
             // get features aroud the hovered point.
@@ -242,7 +336,7 @@ export class TrafficCountLayers {
             name: 'Bicycle Counts (Preview)',
             layers: [
                 `${this.layerPrefix}_counts`,
-                `${this.layerPrefix}_counts-selected`,                
+                `${this.layerPrefix}_counts-selected`,
                 `${this.layerPrefix}_counts-hover`,
                 `${this.layerPrefix}_counts-origins`,
                 `${this.layerPrefix}_counts-destinations`,
@@ -311,7 +405,7 @@ export class TrafficCountLayers {
         if (features.length == 0) {
             features = this.map.queryRenderedFeatures(bbox, {
                 layers: [`${this.layerPrefix}_counts`]
-            }); 
+            });
         }
 
         if (features.length == 0) {
@@ -319,8 +413,8 @@ export class TrafficCountLayers {
             return;
         }
 
-        var feature = features[0];                
-        
+        var feature = features[0];
+
         var selectedDirectedId = DirectedEdgeId.ToDirectedEdgeId(feature.properties.id, true);
 
         if (this.selectedTree) {
@@ -337,11 +431,13 @@ export class TrafficCountLayers {
         }, {
             selected: true
         });
+        this.selectedFeature = feature;
 
         this.map.setLayoutProperty(`${this.layerPrefix}_counts`, 'visibility', 'none');
 
         // get tree forward
         this.api.getTree(selectedDirectedId, tree => {
+            this._updateOverlay();
             for (var o in tree.originTree) {
                 var origin = tree.originTree[o];
                 var originDirectedId = new DirectedEdgeId(Number(o));

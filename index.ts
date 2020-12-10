@@ -7,10 +7,6 @@ import { StatisticsControl } from './components/statistics-control/StatisticsCon
 var bicycleCountsApi = "https://api.bikedataproject.org/count";
 var trafficCountsApi = new TrafficCountsApi(bicycleCountsApi);
 
-var trafficCountLayers = new TrafficCountLayers(trafficCountsApi, {
-    hover: false
-});
-
 var map = new mapboxgl.Map({
     container: 'map',
     //style: 'https://api.maptiler.com/maps/3327a63f-c15d-462a-9f23-ebf73a14254a/style.json?key=2Piy1GKXoXq0rHzzBVDA',
@@ -28,30 +24,11 @@ const layerControl = new LayerControl([{
         'heatmap-heat-lower',
         'heatmap-heat-higher'
     ],
-    visible: true
+    visible: false
 }]);
 map.addControl(layerControl, "top-left");
 
 map.addControl(new NavigationControl());
-
-map.on('click', e => {
-    console.log(e);
-
-    // get features aroud the hovered point.
-    var bbox: [PointLike, PointLike] = [
-        [e.point.x - 5, e.point.y - 5],
-        [e.point.x + 5, e.point.y + 5]
-    ];
-
-    // check origins layer.
-    var features = map.queryRenderedFeatures(bbox, {
-        layers: [`heatmap-heat-lower`]
-    });
-
-    features.forEach(f => {
-        console.log("" + f.properties.users + " - " + f.properties.trips);
-    });
-});
 
 var customizeStyle = () => {
     if (map.isStyleLoaded()) {
@@ -79,7 +56,6 @@ map.on('load', function () {
 
     // get lowest label and road.
     var style = map.getStyle();
-    console.log(style);
     var lowestRoad = undefined;
     var lowestLabel = undefined;
     var lowestSymbol = undefined;
@@ -193,13 +169,17 @@ map.on('load', function () {
         }
     }, lowestRoad);
 
+    // add statistics control.
     var statisticsControl = new StatisticsControl('heatmap-heat-lower');
     map.addControl(statisticsControl, 'bottom-left');
-    statisticsControl.hookLayerControl(layerControl);
+    statisticsControl.hookLayerControl(layerControl, false);
 
-    // add bicycle count layers.
-    trafficCountLayers.addToMap(map);
+    // add traffic counts layers.
+    var trafficCountLayers = new TrafficCountLayers(trafficCountsApi, {
+        hover: false
+    });
+    map.addControl(trafficCountLayers, 'bottom-left');
 
     // hook up layer control.
-    trafficCountLayers.hookLayerControl(layerControl, false);
+    trafficCountLayers.hookLayerControl(layerControl, true);
 });

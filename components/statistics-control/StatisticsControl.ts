@@ -1,6 +1,5 @@
 import { IControl, Map, MapDataEvent, MapSourceDataEvent, MapStyleDataEvent } from "mapbox-gl";
 import './*.css';
-import { EventsHub } from "../../libs/events/EventsHub";
 import { allStatistics } from "./Data";
 import { LayerControl } from "../layer-control/LayerControl";
 import { LayerConfig } from "../layer-control/LayerConfig";
@@ -73,8 +72,22 @@ export class StatisticsControl implements IControl {
 
         if (visible) {
             this.activate();
+
+            layerConfig.layers.forEach(l => {
+                var layer = this.map.getLayer(l);
+                if (layer) {
+                    this.map.setLayoutProperty(l, "visibility", "visible");
+                }
+            });
         } else {
             this.disactivate();
+
+            layerConfig.layers.forEach(l => {
+                var layer = this.map.getLayer(l);
+                if (layer) {
+                    this.map.setLayoutProperty(l, "visibility", "none");
+                }
+            });
         }
 
         layerControl.addLayer(layerConfig);
@@ -201,7 +214,8 @@ export class StatisticsControl implements IControl {
             'source-layer': 'areas',
             'layout': {
                 'line-join': 'round',
-                'line-cap': 'round'
+                'line-cap': 'round',
+                'visibility': this.active ? 'visible' : 'none'
             },
             'paint': {
                 'line-color': '#777',
@@ -215,6 +229,9 @@ export class StatisticsControl implements IControl {
                 type: 'fill',
                 source: 'areas',
                 'source-layer': 'areas',
+                'layout': {
+                    'visibility': this.active ? 'visible' : 'none'
+                },
                 paint: {
                     'fill-color': 'rgba(103,169,207,0.3)',
                     'fill-opacity': [ 
@@ -234,7 +251,8 @@ export class StatisticsControl implements IControl {
                 'source-layer': 'areas',
                 'layout': {
                     'line-join': 'round',
-                    'line-cap': 'round'
+                    'line-cap': 'round',
+                    'visibility': this.active ? 'visible' : 'none'
                 },
                 'paint': {
                     'line-color': '#FFF',
@@ -284,12 +302,6 @@ export class StatisticsControl implements IControl {
                 {
                     selected: true
                 });
-    
-            // this.map.setFilter('areas-stats-selected', [
-            //     'in',
-            //     'id',
-            //     this.selectedFeature.properties.id,
-            // ]);
         });
     }
 

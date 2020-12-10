@@ -125,8 +125,6 @@ export class LayerControl implements IControl {
             var handleClick = (l, button) => {
                 return e => {
                     var c = this.layers[l];
-                    console.log(i);
-                    console.log(l);
                     if (c.visible) {
                         this.hide(c);
                         button.classList.remove("active");
