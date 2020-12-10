@@ -65,7 +65,8 @@ export class StatisticsControl implements IControl {
             layers: [
                 `areas-stats`,
                 `areas-stats-selected`,                
-                `areas-stats-boundaries`
+                `areas-stats-boundaries`,
+                `areas-stats-boundaries-selected`
             ],
             visible: visible
         };
@@ -204,7 +205,7 @@ export class StatisticsControl implements IControl {
             },
             'paint': {
                 'line-color': '#777',
-                'line-width': .4
+                'line-width': .8
             }
         });
 
@@ -221,9 +222,31 @@ export class StatisticsControl implements IControl {
                         ['boolean', ['feature-state', 'selected'], false],
                         0.75,
                         0
-                    ]
+                    ],
+                    'fill-outline-color': 'rgba(255,255,255,1)'
                 }
             }, this.beforeLayer);
+
+            this.map.addLayer({
+                'id': 'areas-stats-boundaries-selected',
+                'type': 'line',
+                'source': 'areas',
+                'source-layer': 'areas',
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#FFF',
+                    'line-width': 2,
+                    'line-opacity': [ 
+                        'case',
+                        ['boolean', ['feature-state', 'selected'], false],
+                        1,
+                        0
+                    ],
+                }
+            });
 
         var me = this;
         this.map.on("data", e => {    
