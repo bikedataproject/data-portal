@@ -24,7 +24,7 @@ const layerControl = new LayerControl([{
         'heatmap-heat-lower',
         'heatmap-heat-higher'
     ],
-    visible: false
+    visible: true
 }]);
 map.addControl(layerControl, "top-left");
 
@@ -172,7 +172,7 @@ map.on('load', function () {
     // add statistics control.
     var statisticsControl = new StatisticsControl('heatmap-heat-lower');
     map.addControl(statisticsControl, 'bottom-left');
-    statisticsControl.hookLayerControl(layerControl, false);
+    statisticsControl.hookLayerControl(layerControl, true);
 
     // add traffic counts layers.
     var trafficCountLayers = new TrafficCountLayers(trafficCountsApi, {
@@ -181,5 +181,5 @@ map.on('load', function () {
     map.addControl(trafficCountLayers, 'bottom-left');
 
     // hook up layer control.
-    trafficCountLayers.hookLayerControl(layerControl, true);
+    trafficCountLayers.hookLayerControl(layerControl, false);
 });

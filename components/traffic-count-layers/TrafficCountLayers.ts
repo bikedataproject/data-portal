@@ -183,10 +183,12 @@ export class TrafficCountLayers implements IControl {
             'source-layer': 'bikedata',
             'layout': {
                 'line-join': 'round',
-                'line-cap': 'round'
+                'line-cap': 'round',
+                'visibility': this.active ? 'visible' : 'none'
             },
             'paint': {
-                'line-color': '#ffd700',
+                'line-color': '#FFF',
+                'line-opacity': 0.5,
                 'line-width': ['interpolate', ['linear'], ['zoom'],
                     10, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 10], 0.1], 2],
                     14, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 5], 0.1], 5]
@@ -204,7 +206,7 @@ export class TrafficCountLayers implements IControl {
                 'line-cap': 'round'
             },
             'paint': {
-                'line-color': '#ffd700',
+                'line-color': '#FFF',
                 'line-width': [
                     'case',
                     ['boolean', ['feature-state', 'selected'], false],
@@ -366,8 +368,22 @@ export class TrafficCountLayers implements IControl {
 
         if (visible) {
             this.activate();
+
+            layerConfig.layers.forEach(l => {
+                var layer = this.map.getLayer(l);
+                if (layer) {
+                    this.map.setLayoutProperty(l, "visibility", "visible");
+                }
+            });
         } else {
             this.disactivate();
+
+            layerConfig.layers.forEach(l => {
+                var layer = this.map.getLayer(l);
+                if (layer) {
+                    this.map.setLayoutProperty(l, "visibility", "none");
+                }
+            });
         }
 
         layerControl.addLayer(layerConfig);
@@ -376,19 +392,24 @@ export class TrafficCountLayers implements IControl {
         layerControl.on('show', c => {
             if (c.name != layerConfig.name) return;
 
-            me._reset();
             me.active = true;
+            me._reset();
         });
         layerControl.on('hide', c => {
             if (c.name != layerConfig.name) return;
 
+            this.navElement.style.display = 'none';
             me.active = false;
         });
     }
 
     private _reset(): void {
         // there no features are selected, reset state.
-        this.map.setLayoutProperty(`${this.layerPrefix}_counts`, 'visibility', 'visible');
+        if (this.active) {
+            this.map.setLayoutProperty(`${this.layerPrefix}_counts`, 'visibility', 'visible');
+        } else {
+            this.map.setLayoutProperty(`${this.layerPrefix}_counts`, 'visibility', 'none');
+        }
     }
 
     private _onMapClick(e: MapMouseEvent & EventData) {
