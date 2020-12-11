@@ -187,11 +187,11 @@ export class TrafficCountLayers implements IControl {
                 'visibility': this.active ? 'visible' : 'none'
             },
             'paint': {
-                'line-color': '#FFF',
-                'line-opacity': 0.5,
+                'line-color': '#ffff00',
+                'line-opacity': 0.8,
                 'line-width': ['interpolate', ['linear'], ['zoom'],
                     10, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 10], 0.1], 2],
-                    14, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 5], 0.1], 5]
+                    14, ["min", ["max", ["/", ["+", ["get", "forward_count"], ["get", "backward_count"]], 5], 0.1], 8]
                 ]
             }
         }, behindLayer);
@@ -230,7 +230,7 @@ export class TrafficCountLayers implements IControl {
                 'line-width': [
                     'case',
                     ['boolean', ['feature-state', 'hover'], false],
-                    ["min", ["number", ["feature-state", "count"]], 10],
+                    10,
                     0
                 ]
             }
