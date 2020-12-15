@@ -103,7 +103,7 @@ map.on('load', function () {
     // }, lowestSymbol);
 
     function factor(zoom) {
-        return 30 * Math.pow(4, 14 - zoom);
+        return 100 * Math.pow(4, 14 - zoom);
     }
 
     map.addLayer({
@@ -142,7 +142,7 @@ map.on('load', function () {
                 ['linear'],
                 ['zoom'],
                 0, 1,
-                14, 1
+                14, .5
             ],
             'heatmap-color': [
                 'interpolate',
