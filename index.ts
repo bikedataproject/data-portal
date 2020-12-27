@@ -1,4 +1,4 @@
-import { NavigationControl, PointLike } from 'mapbox-gl';
+import { NavigationControl, PointLike, Map } from 'mapbox-gl';
 import { TrafficCountsApi } from './apis/traffic-counts-api/TrafficCountsApi';
 import { LayerControl } from './components/layer-control/LayerControl';
 import { TrafficCountLayers } from "./components/traffic-count-layers/TrafficCountLayers";
@@ -29,6 +29,7 @@ const layerControl = new LayerControl([{
 map.addControl(layerControl, "top-left");
 
 map.addControl(new NavigationControl());
+map.addControl(new mapboxgl.FullscreenControl());
 
 var customizeStyle = () => {
     if (map.isStyleLoaded()) {
