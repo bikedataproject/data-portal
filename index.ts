@@ -87,7 +87,7 @@ map.on('load', function () {
     map.addSource("heatmap", {
         type: 'vector',
         // url: 'https://api.bikedataproject.org/tiles/heatmap/mvt.json'
-        url: 'https://api.bikedataproject.org/tiles/heatmap/staging/mvt.json'
+        url: 'https://api.bikedataproject.org/tiles/heatmap/mvt.json'
         // url: 'http://localhost:8081/local-mvt.json'
     });
 
